@@ -12,7 +12,8 @@ export class Collision {
       enemyHits: [],
       barrelHits: [],
       crateHits: [],
-      playerHit: false
+      playerHit: false,
+      hitEnemy: null
     };
 
     const playerBox = player.boundingBox;
@@ -65,10 +66,11 @@ export class Collision {
       }
     }
 
-    // Check player-enemy collisions (game over condition)
+    // Check player-enemy collisions (lose soldiers)
     for (const enemy of spawner.enemies) {
       if (this.boxIntersects(playerBox, enemy.boundingBox)) {
         results.playerHit = true;
+        results.hitEnemy = enemy;
         break;
       }
     }

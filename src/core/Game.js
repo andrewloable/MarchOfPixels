@@ -133,9 +133,11 @@ export class Game {
     // Get active boosts from IAP
     const boosts = this.iapStore.getActiveBoosts();
 
+    // Calculate initial strength
+    const initialStrength = upgrades.startingStrength + (boosts.starting_strength || 0);
+
     // Reset game state with upgrades applied
     this.score = 0;
-    this.strength = upgrades.startingStrength + (boosts.starting_strength || 0);
     this.coins = this.loadCoins(); // Load saved coins
     this.distance = 0;
     this.gameSpeed = 10;
@@ -148,15 +150,15 @@ export class Game {
     // Store active boosts
     this.hasShield = boosts.shield || 0;
 
-    // Create player with upgraded fire rate
-    this.player = new Player(this.scene.scene, upgrades.fireRate);
+    // Create player with upgraded fire rate and initial strength (army of soldiers)
+    this.player = new Player(this.scene.scene, upgrades.fireRate, initialStrength);
 
     // Create systems
     this.spawner = new Spawner(this.scene.scene, this.gameSpeed);
     this.collision = new Collision();
 
     // Update HUD
-    this.hud.updateStrength(this.strength);
+    this.hud.updateStrength(this.player.getStrength());
     this.hud.updateScore(this.score);
     this.hud.updateCoins(this.coins);
     this.hud.updateDistance(this.distance);
@@ -217,9 +219,9 @@ export class Game {
       this.strength
     );
 
-    // Handle gate collisions
+    // Handle gate collisions - add soldiers to army
     for (const gate of collisionResults.gateHits) {
-      this.strength += gate.value;
+      this.player.addStrength(gate.value);
       this.score += Math.floor(gate.value * 10 * this.scoreMultiplier);
       this.spawner.removeGate(gate);
     }
@@ -234,11 +236,11 @@ export class Game {
       this.player.removeProjectile(result.projectile);
     }
 
-    // Handle barrel collisions with projectiles
+    // Handle barrel collisions with projectiles - add soldiers to army
     for (const result of collisionResults.barrelHits) {
       result.barrel.health -= this.projectileDamage;
       if (result.barrel.health <= 0) {
-        this.strength += result.barrel.value;
+        this.player.addStrength(result.barrel.value);
         this.score += Math.floor(result.barrel.value * 5 * this.scoreMultiplier);
         this.spawner.removeBarrel(result.barrel);
       }
@@ -257,23 +259,34 @@ export class Game {
       this.player.removeProjectile(result.projectile);
     }
 
-    // Handle player-enemy collision (game over or use shield)
+    // Handle player-enemy collision - lose soldiers from army
     if (collisionResults.playerHit) {
       if (this.hasShield > 0) {
-        // Use shield to survive
+        // Use shield to survive without losing soldiers
         this.hasShield--;
-        // Flash effect would go here
       } else {
-        this.gameOver();
-        return;
+        // Lose soldiers based on enemy value
+        const enemy = collisionResults.hitEnemy;
+        const damage = enemy ? enemy.value : 5;
+        const isGameOver = this.player.removeStrength(damage);
+
+        // Remove the enemy that hit the player
+        if (enemy) {
+          this.spawner.removeEnemy(enemy);
+        }
+
+        if (isGameOver) {
+          this.gameOver();
+          return;
+        }
       }
     }
 
     // Update distance traveled
     this.distance += this.gameSpeed * dt;
 
-    // Update HUD
-    this.hud.updateStrength(this.strength);
+    // Update HUD with current army size
+    this.hud.updateStrength(this.player.getStrength());
     this.hud.updateScore(this.score);
     this.hud.updateDistance(this.distance);
 

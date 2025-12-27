@@ -1,8 +1,9 @@
 import * as THREE from 'three';
 import { Projectile } from './Projectile.js';
+import { Soldier } from './Soldier.js';
 
 export class Player {
-  constructor(scene, fireRateMultiplier = 1) {
+  constructor(scene, fireRateMultiplier = 1, initialStrength = 10) {
     this.scene = scene;
     this.fireRateMultiplier = fireRateMultiplier;
 
@@ -10,116 +11,103 @@ export class Player {
     this.lanePositions = [4.5, 0, -4.5]; // Left, Center, Right (screen perspective)
     this.currentLane = 1; // Start in center (index 1)
     this.targetX = 0;
+    this.currentX = 0;
     this.laneChangeSpeed = 15;
 
-    // Create player group for cartoon character
-    this.mesh = new THREE.Group();
-    this.mesh.position.set(0, 0, 0);
+    // Base position (center of army)
+    this.basePosition = new THREE.Vector3(0, 0, 0);
 
-    // Colors - bright cyan/teal for friendly player
-    const bodyColor = 0x00cec9;
-    const helmetColor = 0x0984e3;
-    const skinColor = 0xffeaa7;
-    const bootColor = 0x2d3436;
+    // Army of soldiers
+    this.soldiers = [];
+    this.currentStrength = 0;
 
-    // Helmet (rounded top)
-    const helmetGeometry = new THREE.SphereGeometry(0.45, 16, 16, 0, Math.PI * 2, 0, Math.PI / 2);
-    const helmetMaterial = new THREE.MeshStandardMaterial({ color: helmetColor });
-    const helmet = new THREE.Mesh(helmetGeometry, helmetMaterial);
-    helmet.position.y = 2.3;
-    this.mesh.add(helmet);
-
-    // Head (sphere)
-    const headGeometry = new THREE.SphereGeometry(0.4, 16, 16);
-    const headMaterial = new THREE.MeshStandardMaterial({ color: skinColor });
-    const head = new THREE.Mesh(headGeometry, headMaterial);
-    head.position.y = 2.0;
-    this.mesh.add(head);
-
-    // Eyes
-    const eyeGeometry = new THREE.SphereGeometry(0.08, 8, 8);
-    const eyeMaterial = new THREE.MeshStandardMaterial({ color: 0x2d3436 });
-
-    const leftEye = new THREE.Mesh(eyeGeometry, eyeMaterial);
-    leftEye.position.set(-0.15, 2.05, 0.35);
-    this.mesh.add(leftEye);
-
-    const rightEye = new THREE.Mesh(eyeGeometry, eyeMaterial);
-    rightEye.position.set(0.15, 2.05, 0.35);
-    this.mesh.add(rightEye);
-
-    // Body (rounded cylinder)
-    const bodyGeometry = new THREE.CylinderGeometry(0.5, 0.4, 1.2, 16);
-    const bodyMaterial = new THREE.MeshStandardMaterial({ color: bodyColor });
-    const body = new THREE.Mesh(bodyGeometry, bodyMaterial);
-    body.position.y = 1.2;
-    this.mesh.add(body);
-
-    // Arms
-    const armGeometry = new THREE.CylinderGeometry(0.12, 0.12, 0.8, 8);
-    const armMaterial = new THREE.MeshStandardMaterial({ color: bodyColor });
-
-    const leftArm = new THREE.Mesh(armGeometry, armMaterial);
-    leftArm.position.set(-0.65, 1.3, 0);
-    leftArm.rotation.z = 0.3;
-    this.mesh.add(leftArm);
-
-    const rightArm = new THREE.Mesh(armGeometry, armMaterial);
-    rightArm.position.set(0.65, 1.3, 0);
-    rightArm.rotation.z = -0.3;
-    this.mesh.add(rightArm);
-
-    // Legs
-    const legGeometry = new THREE.CylinderGeometry(0.15, 0.15, 0.6, 8);
-    const legMaterial = new THREE.MeshStandardMaterial({ color: bodyColor });
-
-    this.leftLeg = new THREE.Mesh(legGeometry, legMaterial);
-    this.leftLeg.position.set(-0.2, 0.35, 0);
-    this.mesh.add(this.leftLeg);
-
-    this.rightLeg = new THREE.Mesh(legGeometry, legMaterial);
-    this.rightLeg.position.set(0.2, 0.35, 0);
-    this.mesh.add(this.rightLeg);
-
-    // Boots
-    const bootGeometry = new THREE.BoxGeometry(0.25, 0.15, 0.35);
-    const bootMaterial = new THREE.MeshStandardMaterial({ color: bootColor });
-
-    const leftBoot = new THREE.Mesh(bootGeometry, bootMaterial);
-    leftBoot.position.set(-0.2, 0.08, 0.05);
-    this.mesh.add(leftBoot);
-
-    const rightBoot = new THREE.Mesh(bootGeometry, bootMaterial);
-    rightBoot.position.set(0.2, 0.08, 0.05);
-    this.mesh.add(rightBoot);
-
-    // Gun (held in front)
-    const gunBody = new THREE.BoxGeometry(0.15, 0.15, 0.6);
-    const gunMaterial = new THREE.MeshStandardMaterial({ color: 0x636e72 });
-    const gun = new THREE.Mesh(gunBody, gunMaterial);
-    gun.position.set(0, 1.2, 0.5);
-    this.mesh.add(gun);
-
-    // Gun barrel
-    const barrelGeometry = new THREE.CylinderGeometry(0.05, 0.05, 0.3, 8);
-    const barrel = new THREE.Mesh(barrelGeometry, gunMaterial);
-    barrel.rotation.x = Math.PI / 2;
-    barrel.position.set(0, 1.2, 0.9);
-    this.mesh.add(barrel);
-
-    scene.add(this.mesh);
-
-    // Animation time
-    this.animTime = 0;
+    // Initialize army with starting strength
+    this.setStrength(initialStrength);
 
     // Projectile system
     this.projectiles = [];
     this.baseFireRate = 0.15; // Base seconds between shots
-    this.fireRate = this.baseFireRate / this.fireRateMultiplier; // Apply upgrade
+    this.fireRate = this.baseFireRate / this.fireRateMultiplier;
     this.fireTimer = 0;
+    this.currentShooterIndex = 0; // For staggered shooting
 
-    // Bounding box for collision
+    // Bounding box for collision (encompasses all soldiers)
     this.boundingBox = new THREE.Box3();
+  }
+
+  // Calculate formation positions for soldiers
+  getFormationPositions(count) {
+    const positions = [];
+
+    if (count === 0) return positions;
+
+    // Spiral/cluster formation
+    const spacing = 1.2; // Space between soldiers
+
+    // Leader at center
+    positions.push({ x: 0, z: 0 });
+
+    if (count === 1) return positions;
+
+    // Arrange remaining soldiers in rings
+    let ring = 1;
+    let index = 1;
+
+    while (index < count) {
+      const soldiersInRing = Math.min(ring * 6, count - index);
+      const angleStep = (Math.PI * 2) / soldiersInRing;
+
+      for (let i = 0; i < soldiersInRing && index < count; i++) {
+        const angle = i * angleStep;
+        const radius = ring * spacing;
+        positions.push({
+          x: Math.sin(angle) * radius,
+          z: -Math.cos(angle) * radius * 0.6 // Slightly compressed in Z
+        });
+        index++;
+      }
+      ring++;
+    }
+
+    return positions;
+  }
+
+  setStrength(newStrength) {
+    const targetCount = Math.max(0, Math.min(newStrength, 100)); // Cap at 100 soldiers for performance
+
+    // Add soldiers if needed
+    while (this.soldiers.length < targetCount) {
+      const index = this.soldiers.length;
+      const soldier = new Soldier(this.scene, 0, 0, index);
+      this.soldiers.push(soldier);
+    }
+
+    // Remove soldiers if needed
+    while (this.soldiers.length > targetCount) {
+      const soldier = this.soldiers.pop();
+      soldier.dispose();
+    }
+
+    // Update formation positions
+    const positions = this.getFormationPositions(this.soldiers.length);
+    for (let i = 0; i < this.soldiers.length; i++) {
+      this.soldiers[i].setTargetOffset(positions[i].x, positions[i].z);
+    }
+
+    this.currentStrength = targetCount;
+  }
+
+  addStrength(amount) {
+    this.setStrength(this.currentStrength + amount);
+  }
+
+  removeStrength(amount) {
+    this.setStrength(this.currentStrength - amount);
+    return this.currentStrength <= 0;
+  }
+
+  getStrength() {
+    return this.currentStrength;
   }
 
   update(dt, targetLane) {
@@ -127,43 +115,54 @@ export class Player {
     this.targetX = this.lanePositions[targetLane + 1]; // Convert -1,0,1 to 0,1,2
 
     // Smoothly move to target lane
-    const diff = this.targetX - this.mesh.position.x;
+    const diff = this.targetX - this.currentX;
     if (Math.abs(diff) > 0.01) {
-      this.mesh.position.x += diff * this.laneChangeSpeed * dt;
+      this.currentX += diff * this.laneChangeSpeed * dt;
     } else {
-      this.mesh.position.x = this.targetX;
+      this.currentX = this.targetX;
     }
 
-    // Walking animation - legs swing
-    this.animTime += dt * 8;
-    const legSwing = Math.sin(this.animTime) * 0.3;
-    if (this.leftLeg && this.rightLeg) {
-      this.leftLeg.rotation.x = legSwing;
-      this.rightLeg.rotation.x = -legSwing;
+    // Update base position
+    this.basePosition.set(this.currentX, 0, 0);
+
+    // Update all soldiers
+    for (const soldier of this.soldiers) {
+      soldier.update(dt, this.basePosition.x, this.basePosition.y, this.basePosition.z);
     }
 
-    // Subtle body bob
-    this.mesh.position.y = Math.abs(Math.sin(this.animTime)) * 0.05;
-
-    // Auto-fire projectiles
+    // Auto-fire projectiles (staggered across soldiers)
     this.fireTimer += dt;
-    if (this.fireTimer >= this.fireRate) {
+    if (this.fireTimer >= this.fireRate && this.soldiers.length > 0) {
       this.fireTimer = 0;
-      this.fireProjectile();
+      this.fireProjectiles();
     }
 
-    // Update bounding box
-    this.boundingBox.setFromObject(this.mesh);
+    // Update bounding box to encompass all soldiers
+    this.updateBoundingBox();
   }
 
-  fireProjectile() {
-    const projectile = new Projectile(
-      this.scene,
-      this.mesh.position.x,
-      1.2, // Gun barrel height - not mesh.position.y which is ground level
-      this.mesh.position.z + 1
-    );
-    this.projectiles.push(projectile);
+  fireProjectiles() {
+    if (this.soldiers.length === 0) return;
+
+    // Fire from multiple soldiers (up to 5 at a time for balance)
+    const shootersPerVolley = Math.min(5, this.soldiers.length);
+
+    for (let i = 0; i < shootersPerVolley; i++) {
+      const soldierIndex = (this.currentShooterIndex + i) % this.soldiers.length;
+      const soldier = this.soldiers[soldierIndex];
+      const pos = soldier.getWorldPosition();
+
+      const projectile = new Projectile(
+        this.scene,
+        pos.x,
+        0.7, // Gun barrel height (scaled soldier)
+        pos.z + 0.6
+      );
+      this.projectiles.push(projectile);
+    }
+
+    // Rotate to next set of shooters
+    this.currentShooterIndex = (this.currentShooterIndex + shootersPerVolley) % this.soldiers.length;
   }
 
   updateProjectiles(dt, gameSpeed) {
@@ -187,13 +186,43 @@ export class Player {
     }
   }
 
-  dispose() {
-    this.scene.remove(this.mesh);
-    this.mesh.traverse((child) => {
-      if (child.geometry) child.geometry.dispose();
-      if (child.material) child.material.dispose();
-    });
+  updateBoundingBox() {
+    if (this.soldiers.length === 0) {
+      this.boundingBox.makeEmpty();
+      return;
+    }
 
+    // Start with first soldier's position
+    const firstPos = this.soldiers[0].mesh.position;
+    this.boundingBox.min.set(firstPos.x - 0.5, 0, firstPos.z - 0.5);
+    this.boundingBox.max.set(firstPos.x + 0.5, 2, firstPos.z + 0.5);
+
+    // Expand to include all soldiers
+    for (let i = 1; i < this.soldiers.length; i++) {
+      const pos = this.soldiers[i].mesh.position;
+      this.boundingBox.min.x = Math.min(this.boundingBox.min.x, pos.x - 0.5);
+      this.boundingBox.min.z = Math.min(this.boundingBox.min.z, pos.z - 0.5);
+      this.boundingBox.max.x = Math.max(this.boundingBox.max.x, pos.x + 0.5);
+      this.boundingBox.max.z = Math.max(this.boundingBox.max.z, pos.z + 0.5);
+    }
+  }
+
+  // Get position for collision checks (center of army)
+  get mesh() {
+    // Return a fake mesh object for compatibility
+    return {
+      position: this.basePosition
+    };
+  }
+
+  dispose() {
+    // Dispose all soldiers
+    for (const soldier of this.soldiers) {
+      soldier.dispose();
+    }
+    this.soldiers = [];
+
+    // Dispose all projectiles
     for (const projectile of this.projectiles) {
       this.scene.remove(projectile.mesh);
       projectile.dispose();
