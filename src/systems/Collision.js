@@ -11,6 +11,7 @@ export class Collision {
       gateHits: [],
       enemyHits: [],
       barrelHits: [],
+      crateHits: [],
       playerHit: false
     };
 
@@ -44,6 +45,18 @@ export class Collision {
         if (this.boxIntersects(projectileBox, barrel.boundingBox)) {
           results.barrelHits.push({
             barrel: barrel,
+            projectile: projectile,
+            damage: 1
+          });
+          break;
+        }
+      }
+
+      // Check against crates
+      for (const crate of spawner.crates) {
+        if (this.boxIntersects(projectileBox, crate.boundingBox)) {
+          results.crateHits.push({
+            crate: crate,
             projectile: projectile,
             damage: 1
           });

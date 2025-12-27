@@ -2,6 +2,9 @@ export class HUD {
   constructor() {
     this.strengthElement = document.getElementById('strength');
     this.scoreElement = document.getElementById('score');
+    this.coinsElement = document.getElementById('coins');
+    this.distanceElement = document.getElementById('distance');
+    this.progressBar = document.getElementById('progress-bar');
   }
 
   updateStrength(value) {
@@ -12,12 +15,27 @@ export class HUD {
 
   updateScore(value) {
     if (this.scoreElement) {
-      this.scoreElement.textContent = `Score: ${value}`;
+      this.scoreElement.textContent = `Score: ${value.toLocaleString()}`;
     }
   }
 
-  updateWave(value) {
-    // TODO: Add wave indicator element
+  updateCoins(value) {
+    if (this.coinsElement) {
+      this.coinsElement.textContent = value.toLocaleString();
+    }
+  }
+
+  updateDistance(value) {
+    if (this.distanceElement) {
+      const meters = Math.floor(value);
+      this.distanceElement.textContent = `${meters}m`;
+    }
+
+    // Update progress bar (cycles every 100m)
+    if (this.progressBar) {
+      const progress = (value % 100) / 100;
+      this.progressBar.style.width = `${progress * 100}%`;
+    }
   }
 
   show() {

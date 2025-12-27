@@ -1,6 +1,7 @@
 import { Enemy } from '../entities/Enemy.js';
 import { Gate } from '../entities/Gate.js';
 import { Barrel } from '../entities/Barrel.js';
+import { Crate } from '../entities/Crate.js';
 
 export class Spawner {
   constructor(scene, gameSpeed) {
@@ -11,16 +12,19 @@ export class Spawner {
     this.enemies = [];
     this.gates = [];
     this.barrels = [];
+    this.crates = [];
 
     // Spawn timers
     this.enemySpawnTimer = 0;
     this.gateSpawnTimer = 0;
     this.barrelSpawnTimer = 0;
+    this.crateSpawnTimer = 0;
 
     // Spawn intervals (seconds)
     this.enemySpawnInterval = 3;
     this.gateSpawnInterval = 5;
     this.barrelSpawnInterval = 4;
+    this.crateSpawnInterval = 6;
 
     // Spawn distance (how far ahead to spawn)
     this.spawnDistance = 60;
@@ -42,6 +46,7 @@ export class Spawner {
     this.enemySpawnTimer += dt;
     this.gateSpawnTimer += dt;
     this.barrelSpawnTimer += dt;
+    this.crateSpawnTimer += dt;
 
     // Spawn enemies
     if (this.enemySpawnTimer >= this.enemySpawnInterval / this.difficultyMultiplier) {
@@ -59,6 +64,12 @@ export class Spawner {
     if (this.barrelSpawnTimer >= this.barrelSpawnInterval) {
       this.barrelSpawnTimer = 0;
       this.spawnBarrel();
+    }
+
+    // Spawn crates
+    if (this.crateSpawnTimer >= this.crateSpawnInterval) {
+      this.crateSpawnTimer = 0;
+      this.spawnCrate();
     }
 
     // Update all entities
@@ -113,6 +124,17 @@ export class Spawner {
     this.barrels.push(barrel);
   }
 
+  spawnCrate() {
+    // Random lane
+    const lane = this.lanes[Math.floor(Math.random() * this.lanes.length)];
+
+    // Coin value (scales with difficulty)
+    const coinValue = Math.floor(5 + Math.random() * 15 * this.difficultyMultiplier);
+
+    const crate = new Crate(this.scene, lane, this.spawnDistance, coinValue);
+    this.crates.push(crate);
+  }
+
   updateEntities(dt, gameSpeed) {
     // Update enemies
     for (const enemy of this.enemies) {
@@ -127,6 +149,11 @@ export class Spawner {
     // Update barrels
     for (const barrel of this.barrels) {
       barrel.update(dt, gameSpeed);
+    }
+
+    // Update crates
+    for (const crate of this.crates) {
+      crate.update(dt, gameSpeed);
     }
   }
 
@@ -156,6 +183,14 @@ export class Spawner {
         this.barrels.splice(i, 1);
       }
     }
+
+    // Remove crates behind player
+    for (let i = this.crates.length - 1; i >= 0; i--) {
+      if (this.crates[i].mesh.position.z < removeDistance) {
+        this.crates[i].dispose();
+        this.crates.splice(i, 1);
+      }
+    }
   }
 
   removeGate(gate) {
@@ -182,6 +217,14 @@ export class Spawner {
     }
   }
 
+  removeCrate(crate) {
+    const index = this.crates.indexOf(crate);
+    if (index > -1) {
+      this.crates[index].dispose();
+      this.crates.splice(index, 1);
+    }
+  }
+
   clear() {
     // Dispose all entities
     for (const enemy of this.enemies) {
@@ -193,9 +236,13 @@ export class Spawner {
     for (const barrel of this.barrels) {
       barrel.dispose();
     }
+    for (const crate of this.crates) {
+      crate.dispose();
+    }
 
     this.enemies = [];
     this.gates = [];
     this.barrels = [];
+    this.crates = [];
   }
 }

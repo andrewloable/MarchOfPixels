@@ -26,6 +26,8 @@ export class Game {
     this.isRunning = false;
     this.score = 0;
     this.strength = 10;
+    this.coins = 0;
+    this.distance = 0;
     this.gameSpeed = 10;
     this.lastTime = 0;
 
@@ -93,6 +95,8 @@ export class Game {
     // Reset game state
     this.score = 0;
     this.strength = 10;
+    this.coins = this.loadCoins(); // Load saved coins
+    this.distance = 0;
     this.gameSpeed = 10;
 
     // Create player
@@ -105,6 +109,30 @@ export class Game {
     // Update HUD
     this.hud.updateStrength(this.strength);
     this.hud.updateScore(this.score);
+    this.hud.updateCoins(this.coins);
+    this.hud.updateDistance(this.distance);
+  }
+
+  loadCoins() {
+    try {
+      return parseInt(localStorage.getItem('mop_coins') || '0', 10);
+    } catch {
+      return 0;
+    }
+  }
+
+  saveCoins() {
+    try {
+      localStorage.setItem('mop_coins', this.coins.toString());
+    } catch {
+      // localStorage not available
+    }
+  }
+
+  addCoins(amount) {
+    this.coins += amount;
+    this.saveCoins();
+    this.hud.updateCoins(this.coins);
   }
 
   gameLoop(currentTime) {
@@ -168,15 +196,30 @@ export class Game {
       this.player.removeProjectile(result.projectile);
     }
 
+    // Handle crate collisions with projectiles
+    for (const result of collisionResults.crateHits) {
+      result.crate.health -= result.damage;
+      if (result.crate.health <= 0) {
+        this.addCoins(result.crate.coinValue);
+        this.score += result.crate.coinValue * 2;
+        this.spawner.removeCrate(result.crate);
+      }
+      this.player.removeProjectile(result.projectile);
+    }
+
     // Handle player-enemy collision (game over)
     if (collisionResults.playerHit) {
       this.gameOver();
       return;
     }
 
+    // Update distance traveled
+    this.distance += this.gameSpeed * dt;
+
     // Update HUD
     this.hud.updateStrength(this.strength);
     this.hud.updateScore(this.score);
+    this.hud.updateDistance(this.distance);
 
     // Gradually increase game speed
     this.gameSpeed = 10 + (this.score / 1000);
