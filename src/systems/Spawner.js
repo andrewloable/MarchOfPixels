@@ -24,7 +24,7 @@ export class Spawner {
     this.enemySpawnInterval = 3;
     this.gateSpawnInterval = 5;
     this.barrelSpawnInterval = 4;
-    this.crateSpawnInterval = 6;
+    this.crateSpawnInterval = 8;
 
     // Spawn distance (how far ahead to spawn)
     this.spawnDistance = 60;
@@ -34,13 +34,23 @@ export class Spawner {
 
     // Difficulty scaling
     this.difficultyMultiplier = 1;
+
+    // Progression tracking (time-based for smoother scaling)
+    this.gameTime = 0;
   }
 
   update(dt, gameSpeed) {
     this.gameSpeed = gameSpeed;
 
-    // Update difficulty based on game speed
-    this.difficultyMultiplier = 1 + (gameSpeed - 10) / 20;
+    // Track total game time for progression
+    this.gameTime += dt;
+
+    // Update difficulty based on game speed (slower scaling)
+    this.difficultyMultiplier = 1 + (gameSpeed - 10) / 30;
+
+    // Progression level: starts at 0, increases over time
+    // Level 1 at 30s, Level 2 at 60s, Level 3 at 120s, etc.
+    this.progressionLevel = Math.floor(this.gameTime / 30);
 
     // Update spawn timers
     this.enemySpawnTimer += dt;
@@ -48,9 +58,11 @@ export class Spawner {
     this.barrelSpawnTimer += dt;
     this.crateSpawnTimer += dt;
 
-    // Spawn enemies - rate increases significantly with difficulty
-    const enemySpawnRate = this.enemySpawnInterval / (this.difficultyMultiplier * this.difficultyMultiplier);
-    if (this.enemySpawnTimer >= Math.max(0.5, enemySpawnRate)) {
+    // Spawn enemies - starts slow, gradually increases
+    // Level 0: every 4s, Level 1: every 3s, Level 2: every 2.5s, etc.
+    const baseInterval = Math.max(1.5, 4 - this.progressionLevel * 0.5);
+    const enemySpawnRate = baseInterval / this.difficultyMultiplier;
+    if (this.enemySpawnTimer >= Math.max(1, enemySpawnRate)) {
       this.enemySpawnTimer = 0;
       this.spawnEnemyGroup();
     }
@@ -84,13 +96,15 @@ export class Spawner {
     // Random lane
     const lane = this.lanes[Math.floor(Math.random() * this.lanes.length)];
 
-    // Enemy value scales with difficulty (for scoring)
-    const baseValue = Math.floor(10 + Math.random() * 20 * this.difficultyMultiplier);
+    // Enemy value scales with progression (for scoring)
+    // Early game: 5-10, scales up with progression
+    const baseValue = Math.floor(5 + Math.random() * 5 + this.progressionLevel * 3);
 
-    // Spawn a group of enemies - size increases more aggressively with difficulty
-    const baseGroupSize = 3;
-    const maxGroupSize = Math.floor(5 + this.difficultyMultiplier * 3);
-    const groupSize = Math.floor(baseGroupSize + Math.random() * (maxGroupSize - baseGroupSize));
+    // Spawn a group of enemies - starts small, grows with progression
+    // Level 0: 1-2 enemies, Level 1: 2-3, Level 2: 2-4, Level 3+: 3-5+
+    const minGroup = Math.min(1 + Math.floor(this.progressionLevel / 2), 3);
+    const maxGroup = Math.min(2 + this.progressionLevel, 6);
+    const groupSize = Math.floor(minGroup + Math.random() * (maxGroup - minGroup + 1));
 
     for (let i = 0; i < groupSize; i++) {
       const offsetX = (Math.random() - 0.5) * 2;
@@ -109,8 +123,11 @@ export class Spawner {
     // Random lane
     const lane = this.lanes[Math.floor(Math.random() * this.lanes.length)];
 
-    // Gate value (positive bonus)
-    const value = Math.floor(20 + Math.random() * 50 * this.difficultyMultiplier);
+    // Gate value (positive bonus) - starts very low, scales with progression
+    // Level 0: 1-3 soldiers, Level 1: 2-5, Level 2: 3-8, etc.
+    const minValue = 1 + this.progressionLevel;
+    const maxValue = 3 + this.progressionLevel * 3;
+    const value = Math.floor(minValue + Math.random() * (maxValue - minValue));
 
     const gate = new Gate(this.scene, lane, this.spawnDistance, value);
     this.gates.push(gate);
@@ -120,8 +137,11 @@ export class Spawner {
     // Random lane
     const lane = this.lanes[Math.floor(Math.random() * this.lanes.length)];
 
-    // Barrel value
-    const value = Math.floor(10 + Math.random() * 30);
+    // Barrel value - starts low, scales with progression
+    // Level 0: 1-2 soldiers, Level 1: 2-4, Level 2: 3-6, etc.
+    const minValue = 1 + Math.floor(this.progressionLevel / 2);
+    const maxValue = 2 + this.progressionLevel * 2;
+    const value = Math.floor(minValue + Math.random() * (maxValue - minValue));
 
     const barrel = new Barrel(this.scene, lane, this.spawnDistance, value);
     this.barrels.push(barrel);

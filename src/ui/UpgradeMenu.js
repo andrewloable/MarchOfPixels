@@ -12,8 +12,8 @@ export class UpgradeMenu {
         name: 'Starting Power',
         description: 'Increase starting strength',
         icon: '💪',
-        baseValue: 10,
-        increment: 5,
+        baseValue: 1,
+        increment: 2,
         maxLevel: 10,
         baseCost: 50,
         costMultiplier: 1.5
