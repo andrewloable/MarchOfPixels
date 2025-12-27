@@ -100,8 +100,7 @@ export class Game {
     // Check collisions
     const collisionResults = this.collision.check(
       this.player,
-      this.spawner.gates,
-      this.spawner.enemies,
+      this.spawner,
       this.strength
     );
 
@@ -118,6 +117,17 @@ export class Game {
       if (result.enemy.health <= 0) {
         this.score += result.enemy.value * 5;
         this.spawner.removeEnemy(result.enemy);
+      }
+      this.player.removeProjectile(result.projectile);
+    }
+
+    // Handle barrel collisions with projectiles
+    for (const result of collisionResults.barrelHits) {
+      result.barrel.health -= result.damage;
+      if (result.barrel.health <= 0) {
+        this.strength += result.barrel.value;
+        this.score += result.barrel.value * 5;
+        this.spawner.removeBarrel(result.barrel);
       }
       this.player.removeProjectile(result.projectile);
     }

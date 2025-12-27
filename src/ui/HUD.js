@@ -1,20 +1,36 @@
-// HUD.js - Real-time display of player strength and score
-// TODO: Implement HUD component
-
 export class HUD {
   constructor() {
-    // TODO: Get DOM elements
+    this.strengthElement = document.getElementById('strength');
+    this.scoreElement = document.getElementById('score');
   }
 
   updateStrength(value) {
-    // TODO: Update strength display
+    if (this.strengthElement) {
+      this.strengthElement.textContent = value;
+    }
   }
 
   updateScore(value) {
-    // TODO: Update score display
+    if (this.scoreElement) {
+      this.scoreElement.textContent = `Score: ${value}`;
+    }
   }
 
   updateWave(value) {
-    // TODO: Update wave/progress display
+    // TODO: Add wave indicator element
+  }
+
+  show() {
+    const hud = document.getElementById('hud');
+    if (hud) {
+      hud.classList.remove('hidden');
+    }
+  }
+
+  hide() {
+    const hud = document.getElementById('hud');
+    if (hud) {
+      hud.classList.add('hidden');
+    }
   }
 }
