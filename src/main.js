@@ -2,47 +2,49 @@ import { Game } from './core/Game.js';
 
 const game = new Game();
 
+// Helper to add both click and touch support
+function addButtonHandler(elementId, handler) {
+  const element = document.getElementById(elementId);
+  if (!element) return;
+
+  // Click for desktop
+  element.addEventListener('click', handler);
+
+  // Touch for mobile (with prevention of double-firing)
+  let touchHandled = false;
+  element.addEventListener('touchend', (e) => {
+    e.preventDefault();
+    if (!touchHandled) {
+      touchHandled = true;
+      handler();
+      setTimeout(() => { touchHandled = false; }, 300);
+    }
+  }, { passive: false });
+}
+
 // Start button
-document.getElementById('start-btn').addEventListener('click', () => {
-  game.start();
-});
+addButtonHandler('start-btn', () => game.start());
 
 // Restart button
-document.getElementById('restart-btn').addEventListener('click', () => {
-  game.restart();
-});
+addButtonHandler('restart-btn', () => game.restart());
 
 // Menu button (from game over screen)
-document.getElementById('menu-btn').addEventListener('click', () => {
-  game.goToMenu();
-});
+addButtonHandler('menu-btn', () => game.goToMenu());
 
 // Leaderboard button
-document.getElementById('leaderboard-btn').addEventListener('click', () => {
-  game.showLeaderboard();
-});
+addButtonHandler('leaderboard-btn', () => game.showLeaderboard());
 
 // Close leaderboard button
-document.getElementById('close-leaderboard-btn').addEventListener('click', () => {
-  game.hideLeaderboard();
-});
+addButtonHandler('close-leaderboard-btn', () => game.hideLeaderboard());
 
 // Upgrade button (from start screen)
-document.getElementById('upgrade-btn').addEventListener('click', () => {
-  game.showUpgradeMenu();
-});
+addButtonHandler('upgrade-btn', () => game.showUpgradeMenu());
 
 // Close upgrade button
-document.getElementById('close-upgrade-btn').addEventListener('click', () => {
-  game.hideUpgradeMenu();
-});
+addButtonHandler('close-upgrade-btn', () => game.hideUpgradeMenu());
 
 // Shop button (from start screen)
-document.getElementById('shop-btn').addEventListener('click', () => {
-  game.showIAPStore();
-});
+addButtonHandler('shop-btn', () => game.showIAPStore());
 
 // Close shop button
-document.getElementById('close-iap-btn').addEventListener('click', () => {
-  game.hideIAPStore();
-});
+addButtonHandler('close-iap-btn', () => game.hideIAPStore());

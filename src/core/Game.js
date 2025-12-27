@@ -56,6 +56,10 @@ export class Game {
     const closeSettingsBtn = document.getElementById('close-settings-btn');
     const musicToggle = document.getElementById('music-toggle');
     const sfxToggle = document.getElementById('sfx-toggle');
+    const musicVolumeSlider = document.getElementById('music-volume');
+    const musicVolumeValue = document.getElementById('music-volume-value');
+    const sfxVolumeSlider = document.getElementById('sfx-volume');
+    const sfxVolumeValue = document.getElementById('sfx-volume-value');
 
     // Initialize toggle states
     if (musicToggle) {
@@ -72,12 +76,46 @@ export class Game {
       });
     }
 
+    // Initialize volume sliders
+    if (musicVolumeSlider && musicVolumeValue) {
+      const musicVol = Math.round(this.audio.getMusicVolume() * 100);
+      musicVolumeSlider.value = musicVol;
+      musicVolumeValue.textContent = `${musicVol}%`;
+      musicVolumeSlider.addEventListener('input', () => {
+        const vol = parseInt(musicVolumeSlider.value, 10);
+        musicVolumeValue.textContent = `${vol}%`;
+        this.audio.setMusicVolume(vol / 100);
+      });
+    }
+
+    if (sfxVolumeSlider && sfxVolumeValue) {
+      const sfxVol = Math.round(this.audio.getSFXVolume() * 100);
+      sfxVolumeSlider.value = sfxVol;
+      sfxVolumeValue.textContent = `${sfxVol}%`;
+      sfxVolumeSlider.addEventListener('input', () => {
+        const vol = parseInt(sfxVolumeSlider.value, 10);
+        sfxVolumeValue.textContent = `${vol}%`;
+        this.audio.setSFXVolume(vol / 100);
+      });
+    }
+
     // Open settings
     if (settingsBtn) {
       settingsBtn.addEventListener('click', () => {
         // Update toggle states before showing
         if (musicToggle) musicToggle.checked = this.audio.isMusicEnabled();
         if (sfxToggle) sfxToggle.checked = this.audio.isSFXEnabled();
+        // Update volume sliders before showing
+        if (musicVolumeSlider && musicVolumeValue) {
+          const musicVol = Math.round(this.audio.getMusicVolume() * 100);
+          musicVolumeSlider.value = musicVol;
+          musicVolumeValue.textContent = `${musicVol}%`;
+        }
+        if (sfxVolumeSlider && sfxVolumeValue) {
+          const sfxVol = Math.round(this.audio.getSFXVolume() * 100);
+          sfxVolumeSlider.value = sfxVol;
+          sfxVolumeValue.textContent = `${sfxVol}%`;
+        }
         settingsModal.classList.remove('hidden');
       });
     }
@@ -208,6 +246,9 @@ export class Game {
   }
 
   update(dt) {
+    // Update scene animations (road scrolling, decorations)
+    this.scene.update(dt, this.gameSpeed);
+
     // Update player position based on input
     const targetLane = this.input.getTargetLane();
     const prevProjectileCount = this.player.projectiles.length;

@@ -41,6 +41,9 @@ export class Scene {
 
     // Store entities for cleanup
     this.entities = [];
+
+    // Track road scroll offset
+    this.roadScrollOffset = 0;
   }
 
   setupLights() {
@@ -73,10 +76,57 @@ export class Scene {
   }
 
   createGround() {
-    // Grass sides
+    // Create procedural road texture with stripes
+    const canvas = document.createElement('canvas');
+    canvas.width = 128;
+    canvas.height = 256;
+    const ctx = canvas.getContext('2d');
+
+    // Base road color
+    ctx.fillStyle = '#deb887';
+    ctx.fillRect(0, 0, 128, 256);
+
+    // Add subtle road stripes/variations
+    ctx.fillStyle = '#d4a574';
+    for (let y = 0; y < 256; y += 32) {
+      ctx.fillRect(0, y, 128, 2);
+    }
+
+    // Add some texture noise
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.03)';
+    for (let i = 0; i < 200; i++) {
+      const x = Math.random() * 128;
+      const y = Math.random() * 256;
+      ctx.fillRect(x, y, 2, 2);
+    }
+
+    const roadTexture = new THREE.CanvasTexture(canvas);
+    roadTexture.wrapS = THREE.RepeatWrapping;
+    roadTexture.wrapT = THREE.RepeatWrapping;
+    roadTexture.repeat.set(1, 25);
+    this.roadTexture = roadTexture;
+
+    // Grass sides with texture
+    const grassCanvas = document.createElement('canvas');
+    grassCanvas.width = 64;
+    grassCanvas.height = 64;
+    const grassCtx = grassCanvas.getContext('2d');
+    grassCtx.fillStyle = '#55aa55';
+    grassCtx.fillRect(0, 0, 64, 64);
+    // Add grass variation
+    for (let i = 0; i < 100; i++) {
+      grassCtx.fillStyle = Math.random() > 0.5 ? '#4a9a4a' : '#60b060';
+      grassCtx.fillRect(Math.random() * 64, Math.random() * 64, 3, 3);
+    }
+    const grassTexture = new THREE.CanvasTexture(grassCanvas);
+    grassTexture.wrapS = THREE.RepeatWrapping;
+    grassTexture.wrapT = THREE.RepeatWrapping;
+    grassTexture.repeat.set(10, 40);
+    this.grassTexture = grassTexture;
+
     const grassGeometry = new THREE.PlaneGeometry(50, 200);
     const grassMaterial = new THREE.MeshStandardMaterial({
-      color: 0x55aa55, // Bright green
+      map: grassTexture,
       roughness: 0.9
     });
 
@@ -92,10 +142,10 @@ export class Scene {
     rightGrass.receiveShadow = true;
     this.scene.add(rightGrass);
 
-    // Main path (dirt/sand color)
+    // Main path with scrolling texture
     const pathGeometry = new THREE.PlaneGeometry(16, 200);
     const pathMaterial = new THREE.MeshStandardMaterial({
-      color: 0xdeb887, // Burlywood/sand
+      map: roadTexture,
       roughness: 0.8
     });
     this.ground = new THREE.Mesh(pathGeometry, pathMaterial);
@@ -120,31 +170,93 @@ export class Scene {
   createLaneMarkers() {
     // Lane divider dashed lines
     const lineMaterial = new THREE.MeshStandardMaterial({ color: 0xffffff });
+    this.laneMarkers = [];
+    this.laneMarkerSpacing = 4; // Distance between markers
+    this.laneMarkerLength = 200; // Total length to cover
 
     // Create dashed lane markers
     for (let x = -2.25; x <= 2.25; x += 4.5) {
-      for (let z = 0; z < 200; z += 4) {
+      for (let z = 0; z < this.laneMarkerLength; z += this.laneMarkerSpacing) {
         const dashGeometry = new THREE.PlaneGeometry(0.15, 1.5);
         const dash = new THREE.Mesh(dashGeometry, lineMaterial);
         dash.rotation.x = -Math.PI / 2;
         dash.position.set(x, 0.02, z);
+        dash.userData.baseZ = z;
         this.scene.add(dash);
+        this.laneMarkers.push(dash);
+      }
+    }
+  }
+
+  // Update road scrolling animation
+  update(dt, gameSpeed) {
+    // Scroll the road texture
+    this.roadScrollOffset += gameSpeed * dt * 0.1;
+    if (this.roadTexture) {
+      this.roadTexture.offset.y = -this.roadScrollOffset;
+    }
+    if (this.grassTexture) {
+      this.grassTexture.offset.y = -this.roadScrollOffset * 0.5;
+    }
+
+    // Animate lane markers
+    for (const marker of this.laneMarkers) {
+      // Move marker backward
+      marker.position.z = marker.userData.baseZ - (this.roadScrollOffset % this.laneMarkerSpacing) * 10;
+
+      // Wrap around when going off screen
+      if (marker.position.z < -10) {
+        marker.position.z += this.laneMarkerLength;
+      }
+    }
+
+    // Animate clouds
+    if (this.clouds) {
+      for (const cloud of this.clouds) {
+        cloud.position.z -= gameSpeed * dt * 0.3;
+        if (cloud.position.z < -20) {
+          cloud.position.z = 120;
+          cloud.position.x = (Math.random() - 0.5) * 50;
+        }
+      }
+    }
+
+    // Animate side decorations (trees, rocks, etc.)
+    if (this.sideDecorations) {
+      for (const deco of this.sideDecorations) {
+        deco.position.z -= gameSpeed * dt;
+        if (deco.position.z < -10) {
+          deco.position.z += 140;
+        }
       }
     }
   }
 
   createDecorations() {
-    // Add decorative trees on the sides
-    const treePositions = [
-      { x: -15, z: 20 }, { x: 15, z: 20 },
-      { x: -18, z: 40 }, { x: 18, z: 40 },
-      { x: -14, z: 60 }, { x: 14, z: 60 },
-      { x: -17, z: 80 }, { x: 17, z: 80 },
-      { x: -15, z: 100 }, { x: 15, z: 100 }
-    ];
+    this.sideDecorations = [];
+
+    // Add decorative trees on the sides - more spread out for scrolling
+    const treePositions = [];
+    for (let z = 10; z < 140; z += 15) {
+      const leftX = -12 - Math.random() * 6;
+      const rightX = 12 + Math.random() * 6;
+      treePositions.push({ x: leftX, z: z + Math.random() * 5 });
+      treePositions.push({ x: rightX, z: z + Math.random() * 5 });
+    }
 
     for (const pos of treePositions) {
-      this.createTree(pos.x, pos.z);
+      const tree = this.createTree(pos.x, pos.z);
+      this.sideDecorations.push(tree);
+    }
+
+    // Add bushes and rocks
+    for (let z = 5; z < 140; z += 20) {
+      // Left side
+      const leftBush = this.createBush(-10 - Math.random() * 3, z + Math.random() * 10);
+      this.sideDecorations.push(leftBush);
+      // Right side
+      const rightRock = this.createRock(10 + Math.random() * 3, z + Math.random() * 10);
+      this.sideDecorations.push(rightRock);
     }
 
     // Add clouds
@@ -183,22 +295,99 @@ export class Scene {
     tree.position.set(x, 0, z);
     // Slight random rotation for variety
     tree.rotation.y = Math.random() * Math.PI * 2;
+    // Random scale for variety
+    const scale = 0.7 + Math.random() * 0.6;
+    tree.scale.setScalar(scale);
     this.scene.add(tree);
+    return tree;
+  }
+
+  createBush(x, z) {
+    const bush = new THREE.Group();
+    const bushMaterial = new THREE.MeshStandardMaterial({ color: 0x2d5a27 });
+
+    // Create puffy bush from spheres
+    const sizes = [0.6, 0.5, 0.4, 0.45];
+    const offsets = [
+      { x: 0, y: 0.4, z: 0 },
+      { x: 0.4, y: 0.3, z: 0.2 },
+      { x: -0.3, y: 0.35, z: 0.1 },
+      { x: 0.1, y: 0.5, z: -0.2 }
+    ];
+
+    for (let i = 0; i < sizes.length; i++) {
+      const puff = new THREE.Mesh(
+        new THREE.SphereGeometry(sizes[i], 6, 6),
+        bushMaterial
+      );
+      puff.position.set(offsets[i].x, offsets[i].y, offsets[i].z);
+      puff.castShadow = true;
+      bush.add(puff);
+    }
+
+    bush.position.set(x, 0, z);
+    const scale = 0.8 + Math.random() * 0.4;
+    bush.scale.setScalar(scale);
+    this.scene.add(bush);
+    return bush;
+  }
+
+  createRock(x, z) {
+    const rock = new THREE.Group();
+    const rockMaterial = new THREE.MeshStandardMaterial({
+      color: 0x808080,
+      roughness: 0.9
+    });
+
+    // Main rock body
+    const mainRock = new THREE.Mesh(
+      new THREE.DodecahedronGeometry(0.5, 0),
+      rockMaterial
+    );
+    mainRock.position.y = 0.3;
+    mainRock.rotation.set(Math.random(), Math.random(), Math.random());
+    mainRock.castShadow = true;
+    rock.add(mainRock);
+
+    // Smaller rocks nearby
+    const smallRock = new THREE.Mesh(
+      new THREE.DodecahedronGeometry(0.25, 0),
+      rockMaterial
+    );
+    smallRock.position.set(0.4, 0.15, 0.2);
+    smallRock.rotation.set(Math.random(), Math.random(), Math.random());
+    smallRock.castShadow = true;
+    rock.add(smallRock);
+
+    rock.position.set(x, 0, z);
+    const scale = 0.8 + Math.random() * 0.5;
+    rock.scale.setScalar(scale);
+    this.scene.add(rock);
+    return rock;
   }
 
   createClouds() {
+    this.clouds = [];
     const cloudMaterial = new THREE.MeshStandardMaterial({
       color: 0xffffff,
       transparent: true,
       opacity: 0.9
     });
 
-    const cloudPositions = [
-      { x: -20, y: 25, z: 50 },
-      { x: 25, y: 28, z: 30 },
-      { x: -10, y: 30, z: 80 },
-      { x: 15, y: 26, z: 100 }
-    ];
+    // Create more clouds spread across the sky
+    const cloudPositions = [];
+    for (let z = 20; z < 140; z += 25) {
+      cloudPositions.push({
+        x: -15 - Math.random() * 15,
+        y: 22 + Math.random() * 10,
+        z: z + Math.random() * 15
+      });
+      cloudPositions.push({
+        x: 15 + Math.random() * 15,
+        y: 22 + Math.random() * 10,
+        z: z + Math.random() * 15
+      });
+    }
 
     for (const pos of cloudPositions) {
       const cloud = new THREE.Group();
@@ -222,8 +411,12 @@ export class Scene {
         cloud.add(puff);
       }
 
+      // Random scale for variety
+      const scale = 0.6 + Math.random() * 0.8;
+      cloud.scale.setScalar(scale);
       cloud.position.set(pos.x, pos.y, pos.z);
       this.scene.add(cloud);
+      this.clouds.push(cloud);
     }
   }
 

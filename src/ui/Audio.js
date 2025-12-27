@@ -16,12 +16,12 @@ export class Audio {
   constructor() {
     this.currentAudio = null;
     this.currentType = null; // 'menu' or 'game'
-    this.musicVolume = 0.5;
-    this.sfxVolume = 0.7;
 
     // Load preferences
     this.musicEnabled = this.loadPreference('mop_music', true);
     this.sfxEnabled = this.loadPreference('mop_sfx', true);
+    this.musicVolume = this.loadVolumePreference('mop_music_vol', 0.5);
+    this.sfxVolume = this.loadVolumePreference('mop_sfx_vol', 0.7);
 
     // Preload check - we'll load on first interaction
     this.initialized = false;
@@ -49,6 +49,17 @@ export class Audio {
       const saved = localStorage.getItem(key);
       if (saved === null) return defaultValue;
       return saved === 'true';
+    } catch {
+      return defaultValue;
+    }
+  }
+
+  loadVolumePreference(key, defaultValue) {
+    try {
+      const saved = localStorage.getItem(key);
+      if (saved === null) return defaultValue;
+      const vol = parseFloat(saved);
+      return isNaN(vol) ? defaultValue : Math.max(0, Math.min(1, vol));
     } catch {
       return defaultValue;
     }
@@ -206,8 +217,13 @@ export class Audio {
     return this.musicEnabled;
   }
 
+  getMusicVolume() {
+    return this.musicVolume;
+  }
+
   setMusicVolume(volume) {
     this.musicVolume = Math.max(0, Math.min(1, volume));
+    this.savePreference('mop_music_vol', this.musicVolume);
     if (this.currentAudio) {
       this.currentAudio.volume = this.musicVolume;
     }
@@ -229,8 +245,13 @@ export class Audio {
     return this.sfxEnabled;
   }
 
+  getSFXVolume() {
+    return this.sfxVolume;
+  }
+
   setSFXVolume(volume) {
     this.sfxVolume = Math.max(0, Math.min(1, volume));
+    this.savePreference('mop_sfx_vol', this.sfxVolume);
   }
 
   // Play sound effect

@@ -147,6 +147,8 @@
       background: linear-gradient(180deg, rgba(135, 206, 235, 0.95) 0%, rgba(85, 170, 85, 0.95) 100%);
       color: white;
       font-family: 'Arial Black', Arial, sans-serif;
+      padding: 20px;
+      box-sizing: border-box;
     }
 
     .game-logo {
@@ -545,6 +547,67 @@
       margin-top: 20px;
     }
 
+    /* Volume Slider */
+    .volume-slider-container {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      width: 100%;
+      margin-top: 8px;
+    }
+
+    .volume-slider {
+      flex: 1;
+      -webkit-appearance: none;
+      appearance: none;
+      height: 8px;
+      background: rgba(0, 0, 0, 0.4);
+      border-radius: 4px;
+      outline: none;
+    }
+
+    .volume-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 20px;
+      height: 20px;
+      background: white;
+      border-radius: 50%;
+      cursor: pointer;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    }
+
+    .volume-slider::-moz-range-thumb {
+      width: 20px;
+      height: 20px;
+      background: white;
+      border-radius: 50%;
+      cursor: pointer;
+      border: none;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    }
+
+    .volume-value {
+      font-size: 14px;
+      min-width: 35px;
+      text-align: right;
+    }
+
+    .settings-row-group {
+      padding: 12px 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .settings-row-group:last-of-type {
+      border-bottom: none;
+    }
+
+    .settings-row-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
     /* Upgrade Screen */
     #upgrade-screen {
       position: fixed;
@@ -915,23 +978,35 @@
   <div id="settings-modal" class="hidden">
     <div class="settings-content">
       <h2>SETTINGS</h2>
-      <div class="settings-row">
-        <div class="settings-label">
-          <span>🎵</span> Music
+      <div class="settings-row-group">
+        <div class="settings-row-header">
+          <div class="settings-label">
+            <span>🎵</span> Music
+          </div>
+          <label class="toggle-switch">
+            <input type="checkbox" id="music-toggle" checked>
+            <span class="toggle-slider"></span>
+          </label>
         </div>
-        <label class="toggle-switch">
-          <input type="checkbox" id="music-toggle" checked>
-          <span class="toggle-slider"></span>
-        </label>
+        <div class="volume-slider-container">
+          <input type="range" id="music-volume" class="volume-slider" min="0" max="100" value="50">
+          <span id="music-volume-value" class="volume-value">50%</span>
+        </div>
       </div>
-      <div class="settings-row">
-        <div class="settings-label">
-          <span>🔊</span> Sound FX
+      <div class="settings-row-group">
+        <div class="settings-row-header">
+          <div class="settings-label">
+            <span>🔊</span> Sound FX
+          </div>
+          <label class="toggle-switch">
+            <input type="checkbox" id="sfx-toggle" checked>
+            <span class="toggle-slider"></span>
+          </label>
         </div>
-        <label class="toggle-switch">
-          <input type="checkbox" id="sfx-toggle" checked>
-          <span class="toggle-slider"></span>
-        </label>
+        <div class="volume-slider-container">
+          <input type="range" id="sfx-volume" class="volume-slider" min="0" max="100" value="70">
+          <span id="sfx-volume-value" class="volume-value">70%</span>
+        </div>
       </div>
       <button class="btn settings-close-btn" id="close-settings-btn">DONE</button>
     </div>

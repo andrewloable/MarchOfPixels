@@ -136,6 +136,15 @@ export class Input {
   }
 
   onTouchStart(e) {
+    // Don't prevent default if touching a button or interactive element
+    const target = e.target;
+    if (target.tagName === 'BUTTON' || target.tagName === 'INPUT' ||
+        target.closest('button') || target.closest('.btn') ||
+        target.closest('.modal') || target.closest('.screen') ||
+        target.closest('#start-screen') || target.closest('#game-over-screen')) {
+      return; // Let the button handle the touch
+    }
+
     e.preventDefault();
     const touch = e.touches[0];
     this.isDragging = true;
@@ -145,14 +154,15 @@ export class Input {
   }
 
   onTouchMove(e) {
-    e.preventDefault();
     if (!this.isDragging) return;
+    e.preventDefault();
     const touch = e.touches[0];
     this.currentX = touch.clientX;
     this.updateLaneFromPosition(touch.clientX);
   }
 
   onTouchEnd(e) {
+    if (!this.isDragging) return;
     e.preventDefault();
     this.isDragging = false;
   }
