@@ -5,6 +5,7 @@ import { Player } from '../entities/Player.js';
 import { Spawner } from '../systems/Spawner.js';
 import { Collision } from '../systems/Collision.js';
 import { HUD } from '../ui/HUD.js';
+import { Audio } from '../ui/Audio.js';
 
 export class Game {
   constructor() {
@@ -12,6 +13,7 @@ export class Game {
     this.scene = new Scene(this.container);
     this.input = new Input(this.container);
     this.hud = new HUD();
+    this.audio = new Audio();
 
     this.player = null;
     this.spawner = null;
@@ -28,11 +30,38 @@ export class Game {
 
     // Handle resize
     window.addEventListener('resize', () => this.scene.resize());
+
+    // Setup mute button
+    this.setupMuteButton();
+
+    // Start menu music
+    this.audio.playMenuMusic();
+  }
+
+  setupMuteButton() {
+    const muteBtn = document.getElementById('mute-btn');
+    if (muteBtn) {
+      this.updateMuteButtonIcon();
+      muteBtn.addEventListener('click', () => {
+        this.audio.toggleMute();
+        this.updateMuteButtonIcon();
+      });
+    }
+  }
+
+  updateMuteButtonIcon() {
+    const muteBtn = document.getElementById('mute-btn');
+    if (muteBtn) {
+      muteBtn.textContent = this.audio.isMuted() ? '🔇' : '🔊';
+    }
   }
 
   start() {
     document.getElementById('start-screen').classList.add('hidden');
     document.getElementById('hud').classList.remove('hidden');
+
+    // Switch to game music
+    this.audio.playGameMusic();
 
     this.reset();
     this.isRunning = true;
@@ -43,6 +72,9 @@ export class Game {
   restart() {
     document.getElementById('game-over-screen').classList.add('hidden');
     document.getElementById('hud').classList.remove('hidden');
+
+    // Switch to game music
+    this.audio.playGameMusic();
 
     this.reset();
     this.isRunning = true;
@@ -152,5 +184,8 @@ export class Game {
     document.getElementById('hud').classList.add('hidden');
     document.getElementById('game-over-screen').classList.remove('hidden');
     document.getElementById('final-score').textContent = `Score: ${this.score}`;
+
+    // Switch back to menu music
+    this.audio.playMenuMusic();
   }
 }
