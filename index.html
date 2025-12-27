@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#1a1a2e">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+  <!-- Primary Meta Tags -->
+  <title>March of Pixels</title>
+  <meta name="title" content="March of Pixels">
+  <meta name="description" content="A number progression shooter game - collect numbers, grow stronger, defeat enemies!">
+
+  <!-- Open Graph / Facebook -->
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://march-of-pixels.repetitive.games/">
+  <meta property="og:title" content="March of Pixels">
+  <meta property="og:description" content="A number progression shooter game - collect numbers, grow stronger, defeat enemies!">
+  <meta property="og:image" content="https://march-of-pixels.repetitive.games/image/march-of-pixels-cover.jpg">
+
+  <!-- Twitter -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:url" content="https://march-of-pixels.repetitive.games/">
+  <meta name="twitter:title" content="March of Pixels">
+  <meta name="twitter:description" content="A number progression shooter game - collect numbers, grow stronger, defeat enemies!">
+  <meta name="twitter:image" content="https://march-of-pixels.repetitive.games/image/march-of-pixels-cover.jpg">
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/jpeg" href="/image/march-of-pixels-icon.jpg">
+  <link rel="apple-touch-icon" href="/image/march-of-pixels-icon.jpg">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: #1a1a2e;
+      touch-action: none;
+      -webkit-touch-callout: none;
+      -webkit-user-select: none;
+      user-select: none;
+    }
+
+    #game-container {
+      width: 100%;
+      height: 100%;
+      position: relative;
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+
+    #hud {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      padding: 20px;
+      pointer-events: none;
+      font-family: 'Arial Black', Arial, sans-serif;
+      color: white;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+    }
+
+    #strength {
+      font-size: 48px;
+      text-align: center;
+    }
+
+    #score {
+      font-size: 24px;
+      text-align: center;
+      margin-top: 10px;
+    }
+
+    #start-screen, #game-over-screen {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      background: rgba(26, 26, 46, 0.9);
+      color: white;
+      font-family: 'Arial Black', Arial, sans-serif;
+    }
+
+    #start-screen h1, #game-over-screen h1 {
+      font-size: 36px;
+      margin-bottom: 20px;
+      text-align: center;
+    }
+
+    .btn {
+      padding: 15px 40px;
+      font-size: 24px;
+      font-family: inherit;
+      background: #e94560;
+      color: white;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      margin: 10px;
+      pointer-events: auto;
+    }
+
+    .btn:active {
+      background: #c73e54;
+    }
+
+    #final-score {
+      font-size: 28px;
+      margin-bottom: 20px;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+  </style>
+</head>
+<body>
+  <div id="game-container">
+    <div id="hud" class="hidden">
+      <div id="strength">10</div>
+      <div id="score">Score: 0</div>
+    </div>
+
+    <div id="start-screen">
+      <h1>MARCH OF PIXELS</h1>
+      <button class="btn" id="start-btn">TAP TO START</button>
+    </div>
+
+    <div id="game-over-screen" class="hidden">
+      <h1>GAME OVER</h1>
+      <div id="final-score">Score: 0</div>
+      <button class="btn" id="restart-btn">PLAY AGAIN</button>
+    </div>
+  </div>
+
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>

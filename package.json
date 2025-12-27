@@ -1,0 +1,19 @@
+{
+  "name": "march-of-pixels",
+  "version": "1.0.0",
+  "description": "A number progression shooter game inspired by Count Masters",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "three": "^0.170.0"
+  },
+  "devDependencies": {
+    "vite": "^6.0.0",
+    "vite-plugin-pwa": "^0.21.0"
+  },
+  "license": "MIT"
+}

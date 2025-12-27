@@ -1,0 +1,17 @@
+# Cloudflare Workers configuration
+# TODO: Configure for march-of-pixels.repetitive.games
+
+name = "march-of-pixels-api"
+main = "src/index.js"
+compatibility_date = "2024-01-01"
+
+# D1 Database binding
+[[d1_databases]]
+binding = "DB"
+database_name = "march-of-pixels-scores"
+database_id = "" # TODO: Add after creating database
+
+# Routes
+# routes = [
+#   { pattern = "march-of-pixels.repetitive.games/api/*", zone_name = "repetitive.games" }
+# ]
