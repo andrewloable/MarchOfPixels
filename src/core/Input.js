@@ -9,6 +9,17 @@ export class Input {
     // Lane positions in world space
     this.laneWidth = window.innerWidth / 3;
 
+    // Keyboard state
+    this.keys = {
+      left: false,
+      right: false
+    };
+
+    // Gamepad state
+    this.gamepadIndex = null;
+    this.gamepadDeadzone = 0.3;
+    this.lastGamepadLane = 0;
+
     // Touch events
     container.addEventListener('touchstart', this.onTouchStart.bind(this), { passive: false });
     container.addEventListener('touchmove', this.onTouchMove.bind(this), { passive: false });
@@ -19,10 +30,109 @@ export class Input {
     container.addEventListener('mousemove', this.onMouseMove.bind(this));
     container.addEventListener('mouseup', this.onMouseUp.bind(this));
 
+    // Keyboard events
+    window.addEventListener('keydown', this.onKeyDown.bind(this));
+    window.addEventListener('keyup', this.onKeyUp.bind(this));
+
+    // Gamepad events
+    window.addEventListener('gamepadconnected', this.onGamepadConnected.bind(this));
+    window.addEventListener('gamepaddisconnected', this.onGamepadDisconnected.bind(this));
+
     // Update lane width on resize
     window.addEventListener('resize', () => {
       this.laneWidth = window.innerWidth / 3;
     });
+  }
+
+  // Keyboard handlers
+  onKeyDown(e) {
+    switch (e.code) {
+      case 'ArrowLeft':
+      case 'KeyA':
+        this.keys.left = true;
+        this.updateLaneFromKeyboard();
+        e.preventDefault();
+        break;
+      case 'ArrowRight':
+      case 'KeyD':
+        this.keys.right = true;
+        this.updateLaneFromKeyboard();
+        e.preventDefault();
+        break;
+    }
+  }
+
+  onKeyUp(e) {
+    switch (e.code) {
+      case 'ArrowLeft':
+      case 'KeyA':
+        this.keys.left = false;
+        this.updateLaneFromKeyboard();
+        break;
+      case 'ArrowRight':
+      case 'KeyD':
+        this.keys.right = false;
+        this.updateLaneFromKeyboard();
+        break;
+    }
+  }
+
+  updateLaneFromKeyboard() {
+    if (this.keys.left && !this.keys.right) {
+      this.targetLane = -1;
+    } else if (this.keys.right && !this.keys.left) {
+      this.targetLane = 1;
+    } else {
+      this.targetLane = 0;
+    }
+  }
+
+  // Gamepad handlers
+  onGamepadConnected(e) {
+    console.log(`Gamepad connected: ${e.gamepad.id}`);
+    this.gamepadIndex = e.gamepad.index;
+  }
+
+  onGamepadDisconnected(e) {
+    console.log(`Gamepad disconnected: ${e.gamepad.id}`);
+    if (this.gamepadIndex === e.gamepad.index) {
+      this.gamepadIndex = null;
+    }
+  }
+
+  updateGamepad() {
+    if (this.gamepadIndex === null) return;
+
+    const gamepads = navigator.getGamepads();
+    const gamepad = gamepads[this.gamepadIndex];
+
+    if (!gamepad) return;
+
+    // Left stick X axis (axis 0) or D-pad
+    const leftStickX = gamepad.axes[0] || 0;
+
+    // D-pad buttons (standard mapping)
+    // Button 14 = D-pad left, Button 15 = D-pad right
+    const dpadLeft = gamepad.buttons[14]?.pressed || false;
+    const dpadRight = gamepad.buttons[15]?.pressed || false;
+
+    // Left/Right bumpers (LB = 4, RB = 5)
+    const lbPressed = gamepad.buttons[4]?.pressed || false;
+    const rbPressed = gamepad.buttons[5]?.pressed || false;
+
+    // Determine lane from gamepad input
+    let newLane = 0;
+
+    if (dpadLeft || lbPressed || leftStickX < -this.gamepadDeadzone) {
+      newLane = -1;
+    } else if (dpadRight || rbPressed || leftStickX > this.gamepadDeadzone) {
+      newLane = 1;
+    }
+
+    // Only update if gamepad has priority (no mouse/touch dragging)
+    if (!this.isDragging) {
+      this.targetLane = newLane;
+    }
   }
 
   onTouchStart(e) {
@@ -78,6 +188,21 @@ export class Input {
   }
 
   getTargetLane() {
+    // Poll gamepad state each frame
+    this.updateGamepad();
     return this.targetLane;
+  }
+
+  // Check if any start/action button is pressed (for menu navigation)
+  isStartPressed() {
+    if (this.gamepadIndex === null) return false;
+
+    const gamepads = navigator.getGamepads();
+    const gamepad = gamepads[this.gamepadIndex];
+
+    if (!gamepad) return false;
+
+    // A button (0), Start button (9)
+    return gamepad.buttons[0]?.pressed || gamepad.buttons[9]?.pressed;
   }
 }
