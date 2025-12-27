@@ -6,6 +6,8 @@ import { Spawner } from '../systems/Spawner.js';
 import { Collision } from '../systems/Collision.js';
 import { HUD } from '../ui/HUD.js';
 import { Audio } from '../ui/Audio.js';
+import { Leaderboard } from '../ui/Leaderboard.js';
+import { NameInput } from '../ui/NameInput.js';
 
 export class Game {
   constructor() {
@@ -14,6 +16,8 @@ export class Game {
     this.input = new Input(this.container);
     this.hud = new HUD();
     this.audio = new Audio();
+    this.leaderboard = new Leaderboard();
+    this.nameInput = new NameInput();
 
     this.player = null;
     this.spawner = null;
@@ -182,11 +186,48 @@ export class Game {
   gameOver() {
     this.isRunning = false;
     document.getElementById('hud').classList.add('hidden');
-    document.getElementById('game-over-screen').classList.remove('hidden');
-    document.getElementById('final-score').textContent = `Score: ${this.score}`;
 
     // Switch back to menu music
     this.audio.playMenuMusic();
+
+    // Show name input modal first
+    this.nameInput.show(
+      // On submit
+      async (name) => {
+        const result = await this.leaderboard.submitScore(name, this.score, this.strength);
+        if (result.success) {
+          this.nameInput.submissionComplete();
+          this.showGameOverScreen(result.rank);
+        } else {
+          this.nameInput.submissionFailed(result.error || 'Failed to submit score');
+        }
+      },
+      // On skip
+      () => {
+        this.showGameOverScreen(null);
+      }
+    );
+  }
+
+  showGameOverScreen(rank) {
+    document.getElementById('game-over-screen').classList.remove('hidden');
+    document.getElementById('final-score').textContent = `Score: ${this.score.toLocaleString()}`;
+
+    const rankEl = document.getElementById('player-rank');
+    if (rank && rankEl) {
+      rankEl.textContent = `Rank #${rank}`;
+      rankEl.classList.remove('hidden');
+    } else if (rankEl) {
+      rankEl.classList.add('hidden');
+    }
+  }
+
+  showLeaderboard() {
+    this.leaderboard.show();
+  }
+
+  hideLeaderboard() {
+    this.leaderboard.hide();
   }
 
   goToMenu() {

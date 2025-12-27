@@ -173,6 +173,193 @@
       text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
     }
 
+    #player-rank {
+      font-size: 24px;
+      margin-bottom: 15px;
+      color: #ffd700;
+      text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+    }
+
+    /* Modal styles */
+    .modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.8);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 2000;
+    }
+
+    .modal-content {
+      background: linear-gradient(180deg, #4a90a4 0%, #2d5a6b 100%);
+      padding: 30px;
+      border-radius: 20px;
+      text-align: center;
+      max-width: 350px;
+      width: 90%;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    }
+
+    .modal-content h2 {
+      font-size: 28px;
+      margin-bottom: 10px;
+      color: white;
+      text-shadow: 2px 2px 0 #e94560;
+    }
+
+    .modal-subtitle {
+      font-size: 14px;
+      color: rgba(255, 255, 255, 0.8);
+      margin-bottom: 20px;
+    }
+
+    .input-container {
+      position: relative;
+      margin-bottom: 10px;
+    }
+
+    #player-name-input {
+      width: 100%;
+      padding: 15px 60px 15px 15px;
+      font-size: 24px;
+      font-family: inherit;
+      border: 3px solid white;
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.9);
+      color: #333;
+      text-align: center;
+      box-sizing: border-box;
+    }
+
+    #player-name-input:focus {
+      outline: none;
+      border-color: #ffd700;
+    }
+
+    #char-count {
+      position: absolute;
+      right: 15px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 14px;
+      color: #666;
+    }
+
+    #char-count.over {
+      color: #e94560;
+      font-weight: bold;
+    }
+
+    .error {
+      color: #ff6b8a;
+      font-size: 14px;
+      margin-bottom: 10px;
+      background: rgba(0, 0, 0, 0.3);
+      padding: 8px;
+      border-radius: 5px;
+    }
+
+    .modal-buttons {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      margin-top: 15px;
+    }
+
+    .modal-buttons .btn {
+      flex: 1;
+      padding: 12px 20px;
+      font-size: 18px;
+    }
+
+    /* Leaderboard screen */
+    .screen {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(180deg, rgba(135, 206, 235, 0.98) 0%, rgba(85, 170, 85, 0.98) 100%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px;
+      z-index: 1500;
+      box-sizing: border-box;
+    }
+
+    .screen h1 {
+      font-size: 36px;
+      margin-bottom: 20px;
+      color: white;
+      text-shadow: 3px 3px 0 #e94560;
+    }
+
+    .scores-container {
+      flex: 1;
+      width: 100%;
+      max-width: 400px;
+      background: rgba(255, 255, 255, 0.95);
+      border-radius: 15px;
+      padding: 15px;
+      overflow-y: auto;
+      margin-bottom: 20px;
+      box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
+    }
+
+    .score-row {
+      display: flex;
+      align-items: center;
+      padding: 10px;
+      border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+      font-size: 18px;
+      color: #333;
+    }
+
+    .score-row:last-child {
+      border-bottom: none;
+    }
+
+    .score-row.current-player {
+      background: rgba(255, 215, 0, 0.3);
+      border-radius: 8px;
+    }
+
+    .score-row .rank {
+      width: 45px;
+      font-weight: bold;
+      text-align: center;
+    }
+
+    .score-row .flag {
+      width: 35px;
+      font-size: 20px;
+      text-align: center;
+    }
+
+    .score-row .name {
+      flex: 1;
+      font-weight: bold;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .score-row .score {
+      font-weight: bold;
+      color: #e94560;
+    }
+
+    .loading, .empty {
+      text-align: center;
+      padding: 40px;
+      color: #666;
+      font-size: 16px;
+    }
+
     .hidden {
       display: none !important;
     }
@@ -224,8 +411,36 @@
     <div id="game-over-screen" class="hidden">
       <h1 class="game-over-text">GAME OVER</h1>
       <div id="final-score">Score: 0</div>
+      <div id="player-rank" class="hidden"></div>
       <button class="btn" id="restart-btn">PLAY AGAIN</button>
+      <button class="btn btn-secondary" id="leaderboard-btn">LEADERBOARD</button>
       <button class="btn btn-secondary" id="menu-btn">MAIN MENU</button>
+    </div>
+
+    <!-- Name Input Modal -->
+    <div id="name-input-modal" class="modal hidden">
+      <div class="modal-content">
+        <h2>ENTER YOUR NAME</h2>
+        <p class="modal-subtitle">Submit your score to the leaderboard!</p>
+        <div class="input-container">
+          <input type="text" id="player-name-input" maxlength="10" placeholder="Name" autocomplete="off">
+          <span id="char-count">0/5</span>
+        </div>
+        <div id="name-error" class="error hidden"></div>
+        <div class="modal-buttons">
+          <button class="btn" id="submit-name-btn">SUBMIT</button>
+          <button class="btn btn-secondary" id="skip-name-btn">SKIP</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Leaderboard Screen -->
+    <div id="leaderboard-screen" class="screen hidden">
+      <h1>LEADERBOARD</h1>
+      <div id="scores-list" class="scores-container">
+        <div class="loading">Loading scores...</div>
+      </div>
+      <button class="btn" id="close-leaderboard-btn">BACK</button>
     </div>
   </div>
 

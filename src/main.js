@@ -16,3 +16,13 @@ document.getElementById('restart-btn').addEventListener('click', () => {
 document.getElementById('menu-btn').addEventListener('click', () => {
   game.goToMenu();
 });
+
+// Leaderboard button
+document.getElementById('leaderboard-btn').addEventListener('click', () => {
+  game.showLeaderboard();
+});
+
+// Close leaderboard button
+document.getElementById('close-leaderboard-btn').addEventListener('click', () => {
+  game.hideLeaderboard();
+});
