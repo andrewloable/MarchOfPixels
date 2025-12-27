@@ -9,6 +9,7 @@ import { Audio } from '../ui/Audio.js';
 import { Leaderboard } from '../ui/Leaderboard.js';
 import { NameInput } from '../ui/NameInput.js';
 import { UpgradeMenu } from '../ui/UpgradeMenu.js';
+import { IAPStore } from '../ui/IAPStore.js';
 
 export class Game {
   constructor() {
@@ -20,6 +21,7 @@ export class Game {
     this.leaderboard = new Leaderboard();
     this.nameInput = new NameInput();
     this.upgradeMenu = new UpgradeMenu();
+    this.iapStore = new IAPStore();
 
     this.player = null;
     this.spawner = null;
@@ -97,17 +99,23 @@ export class Game {
     // Get upgrade stats
     const upgrades = this.upgradeMenu.getUpgradeStats();
 
+    // Get active boosts from IAP
+    const boosts = this.iapStore.getActiveBoosts();
+
     // Reset game state with upgrades applied
     this.score = 0;
-    this.strength = upgrades.startingStrength;
+    this.strength = upgrades.startingStrength + (boosts.starting_strength || 0);
     this.coins = this.loadCoins(); // Load saved coins
     this.distance = 0;
     this.gameSpeed = 10;
 
     // Store upgrade multipliers for use during gameplay
-    this.coinMultiplier = upgrades.coinMultiplier;
+    this.coinMultiplier = upgrades.coinMultiplier * (boosts.coin_magnet || 1);
     this.scoreMultiplier = upgrades.scoreMultiplier;
     this.projectileDamage = upgrades.projectileDamage;
+
+    // Store active boosts
+    this.hasShield = boosts.shield || 0;
 
     // Create player with upgraded fire rate
     this.player = new Player(this.scene.scene, upgrades.fireRate);
@@ -218,10 +226,16 @@ export class Game {
       this.player.removeProjectile(result.projectile);
     }
 
-    // Handle player-enemy collision (game over)
+    // Handle player-enemy collision (game over or use shield)
     if (collisionResults.playerHit) {
-      this.gameOver();
-      return;
+      if (this.hasShield > 0) {
+        // Use shield to survive
+        this.hasShield--;
+        // Flash effect would go here
+      } else {
+        this.gameOver();
+        return;
+      }
     }
 
     // Update distance traveled
@@ -240,6 +254,9 @@ export class Game {
   gameOver() {
     this.isRunning = false;
     document.getElementById('hud').classList.add('hidden');
+
+    // Clear one-time boosts after run
+    this.iapStore.clearBoostsAfterRun();
 
     // Switch back to menu music
     this.audio.playMenuMusic();
@@ -293,6 +310,34 @@ export class Game {
 
   hideUpgradeMenu() {
     this.upgradeMenu.hide();
+  }
+
+  showIAPStore() {
+    this.iapStore.show(
+      this.loadCoins(),
+      (newCoins) => {
+        // Called when coins change from purchases
+        this.saveCoinsValue(newCoins);
+      },
+      (purchaseType) => {
+        // Called when special purchases complete
+        if (purchaseType === 'unlock_all') {
+          this.unlockAllUpgrades();
+        }
+      }
+    );
+  }
+
+  hideIAPStore() {
+    this.iapStore.hide();
+  }
+
+  unlockAllUpgrades() {
+    // Max out all upgrades
+    for (const upgrade of this.upgradeMenu.upgrades) {
+      this.upgradeMenu.levels[upgrade.id] = upgrade.maxLevel;
+    }
+    this.upgradeMenu.saveLevels();
   }
 
   saveCoinsValue(value) {

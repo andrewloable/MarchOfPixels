@@ -36,3 +36,13 @@ document.getElementById('upgrade-btn').addEventListener('click', () => {
 document.getElementById('close-upgrade-btn').addEventListener('click', () => {
   game.hideUpgradeMenu();
 });
+
+// Shop button (from start screen)
+document.getElementById('shop-btn').addEventListener('click', () => {
+  game.showIAPStore();
+});
+
+// Close shop button
+document.getElementById('close-iap-btn').addEventListener('click', () => {
+  game.hideIAPStore();
+});
