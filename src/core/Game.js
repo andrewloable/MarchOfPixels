@@ -188,4 +188,22 @@ export class Game {
     // Switch back to menu music
     this.audio.playMenuMusic();
   }
+
+  goToMenu() {
+    document.getElementById('game-over-screen').classList.add('hidden');
+    document.getElementById('start-screen').classList.remove('hidden');
+
+    // Clear entities from scene
+    this.scene.clearEntities();
+    if (this.player) {
+      this.player.dispose();
+      this.player = null;
+    }
+    if (this.spawner) {
+      this.spawner.clear();
+      this.spawner = null;
+    }
+
+    // Menu music should already be playing from gameOver
+  }
 }

@@ -92,37 +92,85 @@
       flex-direction: column;
       justify-content: center;
       align-items: center;
-      background: rgba(26, 26, 46, 0.9);
+      background: linear-gradient(180deg, rgba(135, 206, 235, 0.95) 0%, rgba(85, 170, 85, 0.95) 100%);
       color: white;
       font-family: 'Arial Black', Arial, sans-serif;
     }
 
-    #start-screen h1, #game-over-screen h1 {
-      font-size: 36px;
+    .game-logo {
+      width: 120px;
+      height: 120px;
+      border-radius: 20px;
       margin-bottom: 20px;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+    }
+
+    #start-screen h1, #game-over-screen h1 {
+      font-size: 42px;
+      margin-bottom: 10px;
       text-align: center;
+      text-shadow: 3px 3px 0 #e94560, 5px 5px 10px rgba(0, 0, 0, 0.3);
+      letter-spacing: 2px;
+    }
+
+    .subtitle {
+      font-size: 18px;
+      color: rgba(255, 255, 255, 0.9);
+      margin-bottom: 30px;
+      text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
     }
 
     .btn {
-      padding: 15px 40px;
-      font-size: 24px;
+      padding: 18px 50px;
+      font-size: 22px;
       font-family: inherit;
-      background: #e94560;
+      font-weight: bold;
+      background: linear-gradient(180deg, #ff6b8a 0%, #e94560 100%);
       color: white;
       border: none;
-      border-radius: 10px;
+      border-radius: 50px;
       cursor: pointer;
       margin: 10px;
       pointer-events: auto;
+      box-shadow: 0 6px 0 #b8354a, 0 8px 20px rgba(0, 0, 0, 0.3);
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      transition: transform 0.1s, box-shadow 0.1s;
     }
 
     .btn:active {
-      background: #c73e54;
+      transform: translateY(4px);
+      box-shadow: 0 2px 0 #b8354a, 0 4px 10px rgba(0, 0, 0, 0.3);
+    }
+
+    .btn-secondary {
+      background: linear-gradient(180deg, #74b9ff 0%, #0984e3 100%);
+      box-shadow: 0 6px 0 #0767b3, 0 8px 20px rgba(0, 0, 0, 0.3);
+    }
+
+    .btn-secondary:active {
+      box-shadow: 0 2px 0 #0767b3, 0 4px 10px rgba(0, 0, 0, 0.3);
     }
 
     #final-score {
-      font-size: 28px;
-      margin-bottom: 20px;
+      font-size: 32px;
+      margin-bottom: 10px;
+      text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+    }
+
+    .game-over-text {
+      font-size: 52px;
+      color: #e94560;
+      text-shadow: 3px 3px 0 #fff, 5px 5px 10px rgba(0, 0, 0, 0.3);
+    }
+
+    .controls-hint {
+      position: absolute;
+      bottom: 30px;
+      font-size: 14px;
+      color: rgba(255, 255, 255, 0.8);
+      text-align: center;
+      text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
     }
 
     .hidden {
@@ -162,14 +210,22 @@
     </div>
 
     <div id="start-screen">
+      <img src="/image/march-of-pixels-icon.jpg" alt="March of Pixels" class="game-logo">
       <h1>MARCH OF PIXELS</h1>
-      <button class="btn" id="start-btn">TAP TO START</button>
+      <p class="subtitle">Collect numbers, grow stronger, defeat enemies!</p>
+      <button class="btn" id="start-btn">PLAY</button>
+      <div class="controls-hint">
+        Touch/Mouse: Tap screen sides to move<br>
+        Keyboard: A/D or Arrow Keys<br>
+        Gamepad: Left Stick or D-Pad
+      </div>
     </div>
 
     <div id="game-over-screen" class="hidden">
-      <h1>GAME OVER</h1>
+      <h1 class="game-over-text">GAME OVER</h1>
       <div id="final-score">Score: 0</div>
       <button class="btn" id="restart-btn">PLAY AGAIN</button>
+      <button class="btn btn-secondary" id="menu-btn">MAIN MENU</button>
     </div>
   </div>
 

@@ -11,3 +11,8 @@ document.getElementById('start-btn').addEventListener('click', () => {
 document.getElementById('restart-btn').addEventListener('click', () => {
   game.restart();
 });
+
+// Menu button (from game over screen)
+document.getElementById('menu-btn').addEventListener('click', () => {
+  game.goToMenu();
+});
