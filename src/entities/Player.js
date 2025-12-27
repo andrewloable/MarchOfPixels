@@ -6,8 +6,8 @@ export class Player {
     this.scene = scene;
     this.fireRateMultiplier = fireRateMultiplier;
 
-    // Lane configuration
-    this.lanePositions = [-4.5, 0, 4.5]; // Left, Center, Right
+    // Lane configuration (inverted X for camera view from behind)
+    this.lanePositions = [4.5, 0, -4.5]; // Left, Center, Right (screen perspective)
     this.currentLane = 1; // Start in center (index 1)
     this.targetX = 0;
     this.laneChangeSpeed = 15;

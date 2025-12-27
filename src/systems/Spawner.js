@@ -29,8 +29,8 @@ export class Spawner {
     // Spawn distance (how far ahead to spawn)
     this.spawnDistance = 60;
 
-    // Lane positions
-    this.lanes = [-4.5, 0, 4.5];
+    // Lane positions (inverted X for camera view from behind)
+    this.lanes = [4.5, 0, -4.5];
 
     // Difficulty scaling
     this.difficultyMultiplier = 1;
