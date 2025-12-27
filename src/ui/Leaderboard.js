@@ -1,8 +1,8 @@
 // Leaderboard.js - High scores UI and API integration
 
-// API base URL - use worker URL in production
+// API base URL - use custom domain in production
 const API_BASE = import.meta.env.PROD
-  ? 'https://march-of-pixels-api.loabletech.workers.dev'
+  ? 'https://march-of-pixels-api.repetitive.games'
   : '/api';
 
 // Country code to flag emoji mapping
