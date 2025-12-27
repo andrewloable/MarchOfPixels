@@ -17,8 +17,14 @@ export class NameInput {
   setupEventListeners() {
     if (!this.input || !this.submitBtn || !this.skipBtn) return;
 
-    // Character count update
-    this.input.addEventListener('input', () => this.updateCharCount());
+    // Character count update and auto-uppercase
+    this.input.addEventListener('input', () => {
+      // Convert to uppercase as user types
+      const cursorPos = this.input.selectionStart;
+      this.input.value = this.input.value.toUpperCase();
+      this.input.setSelectionRange(cursorPos, cursorPos);
+      this.updateCharCount();
+    });
 
     // Submit button
     this.submitBtn.addEventListener('click', () => this.handleSubmit());
