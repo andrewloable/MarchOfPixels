@@ -34,8 +34,8 @@ export class UpgradeMenu {
         name: 'Projectile Power',
         description: 'Deal more damage per hit',
         icon: '⚡',
-        baseValue: 1,
-        increment: 1,
+        baseValue: 5,
+        increment: 2,
         maxLevel: 5,
         baseCost: 100,
         costMultiplier: 2.0
