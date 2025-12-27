@@ -160,7 +160,7 @@ export class Player {
     const projectile = new Projectile(
       this.scene,
       this.mesh.position.x,
-      this.mesh.position.y,
+      1.2, // Gun barrel height - not mesh.position.y which is ground level
       this.mesh.position.z + 1
     );
     this.projectiles.push(projectile);
