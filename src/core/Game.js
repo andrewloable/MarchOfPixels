@@ -8,6 +8,7 @@ import { HUD } from '../ui/HUD.js';
 import { Audio } from '../ui/Audio.js';
 import { Leaderboard } from '../ui/Leaderboard.js';
 import { NameInput } from '../ui/NameInput.js';
+import { UpgradeMenu } from '../ui/UpgradeMenu.js';
 
 export class Game {
   constructor() {
@@ -18,6 +19,7 @@ export class Game {
     this.audio = new Audio();
     this.leaderboard = new Leaderboard();
     this.nameInput = new NameInput();
+    this.upgradeMenu = new UpgradeMenu();
 
     this.player = null;
     this.spawner = null;
@@ -92,15 +94,23 @@ export class Game {
     // Clear existing entities
     this.scene.clearEntities();
 
-    // Reset game state
+    // Get upgrade stats
+    const upgrades = this.upgradeMenu.getUpgradeStats();
+
+    // Reset game state with upgrades applied
     this.score = 0;
-    this.strength = 10;
+    this.strength = upgrades.startingStrength;
     this.coins = this.loadCoins(); // Load saved coins
     this.distance = 0;
     this.gameSpeed = 10;
 
-    // Create player
-    this.player = new Player(this.scene.scene);
+    // Store upgrade multipliers for use during gameplay
+    this.coinMultiplier = upgrades.coinMultiplier;
+    this.scoreMultiplier = upgrades.scoreMultiplier;
+    this.projectileDamage = upgrades.projectileDamage;
+
+    // Create player with upgraded fire rate
+    this.player = new Player(this.scene.scene, upgrades.fireRate);
 
     // Create systems
     this.spawner = new Spawner(this.scene.scene, this.gameSpeed);
@@ -171,15 +181,15 @@ export class Game {
     // Handle gate collisions
     for (const gate of collisionResults.gateHits) {
       this.strength += gate.value;
-      this.score += gate.value * 10;
+      this.score += Math.floor(gate.value * 10 * this.scoreMultiplier);
       this.spawner.removeGate(gate);
     }
 
     // Handle enemy collisions with projectiles
     for (const result of collisionResults.enemyHits) {
-      result.enemy.health -= result.damage;
+      result.enemy.health -= this.projectileDamage;
       if (result.enemy.health <= 0) {
-        this.score += result.enemy.value * 5;
+        this.score += Math.floor(result.enemy.value * 5 * this.scoreMultiplier);
         this.spawner.removeEnemy(result.enemy);
       }
       this.player.removeProjectile(result.projectile);
@@ -187,10 +197,10 @@ export class Game {
 
     // Handle barrel collisions with projectiles
     for (const result of collisionResults.barrelHits) {
-      result.barrel.health -= result.damage;
+      result.barrel.health -= this.projectileDamage;
       if (result.barrel.health <= 0) {
         this.strength += result.barrel.value;
-        this.score += result.barrel.value * 5;
+        this.score += Math.floor(result.barrel.value * 5 * this.scoreMultiplier);
         this.spawner.removeBarrel(result.barrel);
       }
       this.player.removeProjectile(result.projectile);
@@ -198,10 +208,11 @@ export class Game {
 
     // Handle crate collisions with projectiles
     for (const result of collisionResults.crateHits) {
-      result.crate.health -= result.damage;
+      result.crate.health -= this.projectileDamage;
       if (result.crate.health <= 0) {
-        this.addCoins(result.crate.coinValue);
-        this.score += result.crate.coinValue * 2;
+        const coinAmount = Math.floor(result.crate.coinValue * this.coinMultiplier);
+        this.addCoins(coinAmount);
+        this.score += Math.floor(coinAmount * 2 * this.scoreMultiplier);
         this.spawner.removeCrate(result.crate);
       }
       this.player.removeProjectile(result.projectile);
@@ -271,6 +282,25 @@ export class Game {
 
   hideLeaderboard() {
     this.leaderboard.hide();
+  }
+
+  showUpgradeMenu() {
+    this.upgradeMenu.show(this.loadCoins(), (newCoins) => {
+      // Called when coins change from purchases
+      this.saveCoinsValue(newCoins);
+    });
+  }
+
+  hideUpgradeMenu() {
+    this.upgradeMenu.hide();
+  }
+
+  saveCoinsValue(value) {
+    try {
+      localStorage.setItem('mop_coins', value.toString());
+    } catch {
+      // localStorage not available
+    }
   }
 
   goToMenu() {

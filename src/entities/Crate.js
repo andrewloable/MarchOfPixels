@@ -74,6 +74,11 @@ export class Crate {
     this.valueSprite.position.set(0.4, crateSize + 0.7, 0);
     this.mesh.add(this.valueSprite);
 
+    // Randomly add bonus decoration (40% chance)
+    if (Math.random() < 0.4) {
+      this.addBonusDecoration(crateSize);
+    }
+
     scene.add(this.mesh);
 
     // Animation
@@ -111,6 +116,127 @@ export class Crate {
     sprite.scale.set(0.8, 0.4, 1);
 
     return sprite;
+  }
+
+  addBonusDecoration(crateSize) {
+    const decorationType = Math.floor(Math.random() * 4);
+
+    switch (decorationType) {
+      case 0:
+        this.addGem(crateSize);
+        break;
+      case 1:
+        this.addRibbon(crateSize);
+        break;
+      case 2:
+        this.addChains(crateSize);
+        break;
+      case 3:
+        this.addPadlock(crateSize);
+        break;
+    }
+  }
+
+  addGem(crateSize) {
+    // Small gem on the side
+    const gemGeometry = new THREE.OctahedronGeometry(0.15, 0);
+    const gemColors = [0xff1744, 0x00e676, 0x2979ff, 0xffea00];
+    const gemMaterial = new THREE.MeshStandardMaterial({
+      color: gemColors[Math.floor(Math.random() * gemColors.length)],
+      metalness: 0.5,
+      roughness: 0.1,
+      emissive: gemColors[Math.floor(Math.random() * gemColors.length)],
+      emissiveIntensity: 0.3
+    });
+    const gem = new THREE.Mesh(gemGeometry, gemMaterial);
+    gem.position.set(0, crateSize / 2, crateSize / 2 + 0.1);
+    gem.rotation.x = Math.PI / 4;
+    this.mesh.add(gem);
+  }
+
+  addRibbon(crateSize) {
+    const ribbonMaterial = new THREE.MeshStandardMaterial({ color: 0xe74c3c });
+
+    // Horizontal ribbon
+    const hRibbon = new THREE.Mesh(
+      new THREE.BoxGeometry(crateSize + 0.1, 0.15, 0.05),
+      ribbonMaterial
+    );
+    hRibbon.position.set(0, crateSize / 2, crateSize / 2 + 0.03);
+    this.mesh.add(hRibbon);
+
+    // Vertical ribbon
+    const vRibbon = new THREE.Mesh(
+      new THREE.BoxGeometry(0.15, crateSize + 0.1, 0.05),
+      ribbonMaterial
+    );
+    vRibbon.position.set(0, crateSize / 2, crateSize / 2 + 0.03);
+    this.mesh.add(vRibbon);
+
+    // Bow
+    const bowGeometry = new THREE.TorusGeometry(0.12, 0.04, 8, 12);
+    const bow1 = new THREE.Mesh(bowGeometry, ribbonMaterial);
+    bow1.position.set(-0.15, crateSize + 0.1, crateSize / 2 + 0.05);
+    bow1.rotation.y = Math.PI / 4;
+    this.mesh.add(bow1);
+
+    const bow2 = new THREE.Mesh(bowGeometry, ribbonMaterial);
+    bow2.position.set(0.15, crateSize + 0.1, crateSize / 2 + 0.05);
+    bow2.rotation.y = -Math.PI / 4;
+    this.mesh.add(bow2);
+  }
+
+  addChains(crateSize) {
+    const chainMaterial = new THREE.MeshStandardMaterial({
+      color: 0x7f8c8d,
+      metalness: 0.8,
+      roughness: 0.3
+    });
+
+    // Chain links across front
+    const linkGeometry = new THREE.TorusGeometry(0.08, 0.02, 8, 12);
+    for (let i = -2; i <= 2; i++) {
+      const link = new THREE.Mesh(linkGeometry, chainMaterial);
+      link.position.set(i * 0.2, crateSize / 2, crateSize / 2 + 0.05);
+      link.rotation.y = i % 2 === 0 ? 0 : Math.PI / 2;
+      this.mesh.add(link);
+    }
+  }
+
+  addPadlock(crateSize) {
+    const group = new THREE.Group();
+    group.position.set(0, crateSize / 2, crateSize / 2 + 0.1);
+
+    // Lock body
+    const bodyGeometry = new THREE.BoxGeometry(0.2, 0.25, 0.1);
+    const bodyMaterial = new THREE.MeshStandardMaterial({
+      color: 0xf39c12,
+      metalness: 0.7,
+      roughness: 0.3
+    });
+    const body = new THREE.Mesh(bodyGeometry, bodyMaterial);
+    group.add(body);
+
+    // Lock shackle
+    const shackleGeometry = new THREE.TorusGeometry(0.08, 0.02, 8, 12, Math.PI);
+    const shackleMaterial = new THREE.MeshStandardMaterial({
+      color: 0x7f8c8d,
+      metalness: 0.9,
+      roughness: 0.2
+    });
+    const shackle = new THREE.Mesh(shackleGeometry, shackleMaterial);
+    shackle.position.y = 0.12;
+    shackle.rotation.z = Math.PI;
+    group.add(shackle);
+
+    // Keyhole
+    const keyholeGeometry = new THREE.CircleGeometry(0.03, 8);
+    const keyholeMaterial = new THREE.MeshBasicMaterial({ color: 0x2d3436 });
+    const keyhole = new THREE.Mesh(keyholeGeometry, keyholeMaterial);
+    keyhole.position.z = 0.051;
+    group.add(keyhole);
+
+    this.mesh.add(group);
   }
 
   update(dt, gameSpeed) {

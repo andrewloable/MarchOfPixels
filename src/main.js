@@ -26,3 +26,13 @@ document.getElementById('leaderboard-btn').addEventListener('click', () => {
 document.getElementById('close-leaderboard-btn').addEventListener('click', () => {
   game.hideLeaderboard();
 });
+
+// Upgrade button (from start screen)
+document.getElementById('upgrade-btn').addEventListener('click', () => {
+  game.showUpgradeMenu();
+});
+
+// Close upgrade button
+document.getElementById('close-upgrade-btn').addEventListener('click', () => {
+  game.hideUpgradeMenu();
+});

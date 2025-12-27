@@ -2,8 +2,9 @@ import * as THREE from 'three';
 import { Projectile } from './Projectile.js';
 
 export class Player {
-  constructor(scene) {
+  constructor(scene, fireRateMultiplier = 1) {
     this.scene = scene;
+    this.fireRateMultiplier = fireRateMultiplier;
 
     // Lane configuration
     this.lanePositions = [-4.5, 0, 4.5]; // Left, Center, Right
@@ -113,7 +114,8 @@ export class Player {
 
     // Projectile system
     this.projectiles = [];
-    this.fireRate = 0.15; // Seconds between shots
+    this.baseFireRate = 0.15; // Base seconds between shots
+    this.fireRate = this.baseFireRate / this.fireRateMultiplier; // Apply upgrade
     this.fireTimer = 0;
 
     // Bounding box for collision
