@@ -2,7 +2,7 @@
 
 // API base URL - use custom domain in production
 const API_BASE = import.meta.env.PROD
-  ? 'https://march-of-pixels-api.repetitive.games'
+  ? 'https://march-of-pixels-api.repetitive.games/api'
   : '/api';
 
 // Country code to flag emoji mapping
