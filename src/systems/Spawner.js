@@ -48,8 +48,9 @@ export class Spawner {
     this.barrelSpawnTimer += dt;
     this.crateSpawnTimer += dt;
 
-    // Spawn enemies
-    if (this.enemySpawnTimer >= this.enemySpawnInterval / this.difficultyMultiplier) {
+    // Spawn enemies - rate increases significantly with difficulty
+    const enemySpawnRate = this.enemySpawnInterval / (this.difficultyMultiplier * this.difficultyMultiplier);
+    if (this.enemySpawnTimer >= Math.max(0.5, enemySpawnRate)) {
       this.enemySpawnTimer = 0;
       this.spawnEnemyGroup();
     }
@@ -83,11 +84,13 @@ export class Spawner {
     // Random lane
     const lane = this.lanes[Math.floor(Math.random() * this.lanes.length)];
 
-    // Enemy value scales with difficulty
+    // Enemy value scales with difficulty (for scoring)
     const baseValue = Math.floor(10 + Math.random() * 20 * this.difficultyMultiplier);
 
-    // Spawn a group of enemies (3-8 based on difficulty)
-    const groupSize = Math.floor(3 + Math.random() * 5 * this.difficultyMultiplier);
+    // Spawn a group of enemies - size increases more aggressively with difficulty
+    const baseGroupSize = 3;
+    const maxGroupSize = Math.floor(5 + this.difficultyMultiplier * 3);
+    const groupSize = Math.floor(baseGroupSize + Math.random() * (maxGroupSize - baseGroupSize));
 
     for (let i = 0; i < groupSize; i++) {
       const offsetX = (Math.random() - 0.5) * 2;
@@ -128,10 +131,8 @@ export class Spawner {
     // Random lane
     const lane = this.lanes[Math.floor(Math.random() * this.lanes.length)];
 
-    // Coin value (scales with difficulty)
-    const coinValue = Math.floor(5 + Math.random() * 15 * this.difficultyMultiplier);
-
-    const crate = new Crate(this.scene, lane, this.spawnDistance, coinValue);
+    // Crate now spawns weapon pickups (fire rate modifiers)
+    const crate = new Crate(this.scene, lane, this.spawnDistance);
     this.crates.push(crate);
   }
 

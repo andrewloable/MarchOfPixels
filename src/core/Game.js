@@ -226,13 +226,10 @@ export class Game {
       this.spawner.removeGate(gate);
     }
 
-    // Handle enemy collisions with projectiles
+    // Handle enemy collisions with projectiles - one bullet = one kill
     for (const result of collisionResults.enemyHits) {
-      result.enemy.health -= this.projectileDamage;
-      if (result.enemy.health <= 0) {
-        this.score += Math.floor(result.enemy.value * 5 * this.scoreMultiplier);
-        this.spawner.removeEnemy(result.enemy);
-      }
+      this.score += Math.floor(result.enemy.value * 5 * this.scoreMultiplier);
+      this.spawner.removeEnemy(result.enemy);
       this.player.removeProjectile(result.projectile);
     }
 
@@ -247,15 +244,13 @@ export class Game {
       this.player.removeProjectile(result.projectile);
     }
 
-    // Handle crate collisions with projectiles
+    // Handle crate collisions with projectiles - weapon pickups
     for (const result of collisionResults.crateHits) {
-      result.crate.health -= this.projectileDamage;
-      if (result.crate.health <= 0) {
-        const coinAmount = Math.floor(result.crate.coinValue * this.coinMultiplier);
-        this.addCoins(coinAmount);
-        this.score += Math.floor(coinAmount * 2 * this.scoreMultiplier);
-        this.spawner.removeCrate(result.crate);
-      }
+      // Apply weapon fire rate modifier to player
+      const modifier = result.crate.fireRateModifier;
+      this.player.applyFireRateModifier(modifier);
+      this.score += Math.floor(50 * this.scoreMultiplier);
+      this.spawner.removeCrate(result.crate);
       this.player.removeProjectile(result.projectile);
     }
 

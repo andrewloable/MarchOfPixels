@@ -110,6 +110,15 @@ export class Player {
     return this.currentStrength;
   }
 
+  applyFireRateModifier(modifier) {
+    // Apply fire rate modifier (positive = faster, negative = slower)
+    // Modifier is a percentage: 0.5 = 50% faster, -0.3 = 30% slower
+    const newMultiplier = this.fireRateMultiplier * (1 + modifier);
+    // Clamp between 0.3x (very slow) and 5x (very fast)
+    this.fireRateMultiplier = Math.max(0.3, Math.min(5, newMultiplier));
+    this.fireRate = this.baseFireRate / this.fireRateMultiplier;
+  }
+
   update(dt, targetLane) {
     // Update target position based on lane
     this.targetX = this.lanePositions[targetLane + 1]; // Convert -1,0,1 to 0,1,2
