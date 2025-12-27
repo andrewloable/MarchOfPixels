@@ -4,6 +4,7 @@ import { Input } from './Input.js';
 import { Player } from '../entities/Player.js';
 import { Spawner } from '../systems/Spawner.js';
 import { Collision } from '../systems/Collision.js';
+import { Effects } from '../systems/Effects.js';
 import { HUD } from '../ui/HUD.js';
 import { Audio } from '../ui/Audio.js';
 import { Leaderboard } from '../ui/Leaderboard.js';
@@ -26,6 +27,7 @@ export class Game {
     this.player = null;
     this.spawner = null;
     this.collision = null;
+    this.effects = null;
 
     this.isRunning = false;
     this.score = 0;
@@ -156,6 +158,10 @@ export class Game {
     // Create systems
     this.spawner = new Spawner(this.scene.scene, this.gameSpeed);
     this.collision = new Collision();
+    this.effects = new Effects(this.scene.scene);
+
+    // Track last shot time for sound throttling
+    this.lastShotSoundTime = 0;
 
     // Update HUD
     this.hud.updateStrength(this.player.getStrength());
@@ -204,13 +210,26 @@ export class Game {
   update(dt) {
     // Update player position based on input
     const targetLane = this.input.getTargetLane();
+    const prevProjectileCount = this.player.projectiles.length;
     this.player.update(dt, targetLane);
+
+    // Play shoot sound (throttled to avoid too many sounds)
+    if (this.player.projectiles.length > prevProjectileCount) {
+      const now = performance.now();
+      if (now - this.lastShotSoundTime > 100) {
+        this.audio.playShootSound();
+        this.lastShotSoundTime = now;
+      }
+    }
 
     // Update spawner and entities
     this.spawner.update(dt, this.gameSpeed);
 
     // Update projectiles
     this.player.updateProjectiles(dt, this.gameSpeed);
+
+    // Update effects
+    this.effects.update(dt);
 
     // Check collisions
     const collisionResults = this.collision.check(
@@ -228,6 +247,10 @@ export class Game {
 
     // Handle enemy collisions with projectiles - one bullet = one kill
     for (const result of collisionResults.enemyHits) {
+      // Create death effect at enemy position
+      this.effects.createEnemyDeathEffect(result.enemy.mesh.position);
+      this.audio.playHitSound();
+
       this.score += Math.floor(result.enemy.value * 5 * this.scoreMultiplier);
       this.spawner.removeEnemy(result.enemy);
       this.player.removeProjectile(result.projectile);
@@ -237,6 +260,8 @@ export class Game {
     for (const result of collisionResults.barrelHits) {
       result.barrel.health -= this.projectileDamage;
       if (result.barrel.health <= 0) {
+        this.effects.createDeathEffect(result.barrel.mesh.position, 0x8b4513, 6);
+        this.audio.playHitSound();
         this.player.addStrength(result.barrel.value);
         this.score += Math.floor(result.barrel.value * 5 * this.scoreMultiplier);
         this.spawner.removeBarrel(result.barrel);
@@ -246,6 +271,10 @@ export class Game {
 
     // Handle crate collisions with projectiles - weapon pickups
     for (const result of collisionResults.crateHits) {
+      // Create pickup effect
+      this.effects.createHitEffect(result.crate.mesh.position);
+      this.audio.playPickupSound();
+
       // Apply weapon fire rate modifier to player
       const modifier = result.crate.fireRateModifier;
       this.player.applyFireRateModifier(modifier);
@@ -263,10 +292,24 @@ export class Game {
         // Lose soldiers based on enemy value
         const enemy = collisionResults.hitEnemy;
         const damage = enemy ? enemy.value : 5;
+
+        // Create death effects for lost soldiers
+        const soldiersToLose = Math.min(damage, this.player.soldiers.length);
+        for (let i = 0; i < soldiersToLose; i++) {
+          const soldierIndex = this.player.soldiers.length - 1 - i;
+          if (soldierIndex >= 0) {
+            this.effects.createSoldierDeathEffect(
+              this.player.soldiers[soldierIndex].mesh.position
+            );
+          }
+        }
+        this.audio.playDeathSound();
+
         const isGameOver = this.player.removeStrength(damage);
 
         // Remove the enemy that hit the player
         if (enemy) {
+          this.effects.createEnemyDeathEffect(enemy.mesh.position);
           this.spawner.removeEnemy(enemy);
         }
 
@@ -400,6 +443,10 @@ export class Game {
     if (this.spawner) {
       this.spawner.clear();
       this.spawner = null;
+    }
+    if (this.effects) {
+      this.effects.clear();
+      this.effects = null;
     }
 
     // Menu music should already be playing from gameOver
