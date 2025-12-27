@@ -416,7 +416,7 @@
       display: none !important;
     }
 
-    #mute-btn {
+    #settings-btn {
       position: fixed;
       top: 15px;
       right: 15px;
@@ -435,8 +435,112 @@
       pointer-events: auto;
     }
 
-    #mute-btn:active {
+    #settings-btn:active {
       background: rgba(0, 0, 0, 0.7);
+    }
+
+    /* Settings Modal */
+    #settings-modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.8);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 2000;
+      font-family: 'Arial Black', Arial, sans-serif;
+    }
+
+    .settings-content {
+      background: linear-gradient(180deg, #4a90a4 0%, #2d5a6b 100%);
+      padding: 25px;
+      border-radius: 20px;
+      text-align: center;
+      max-width: 300px;
+      width: 90%;
+      color: white;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    }
+
+    .settings-content h2 {
+      font-size: 28px;
+      margin: 0 0 20px;
+      text-shadow: 2px 2px 0 #e94560;
+    }
+
+    .settings-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .settings-row:last-of-type {
+      border-bottom: none;
+    }
+
+    .settings-label {
+      font-size: 18px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .settings-label span {
+      font-size: 24px;
+    }
+
+    /* Toggle Switch */
+    .toggle-switch {
+      position: relative;
+      width: 60px;
+      height: 32px;
+    }
+
+    .toggle-switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .toggle-slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.4);
+      border-radius: 32px;
+      transition: 0.3s;
+    }
+
+    .toggle-slider:before {
+      position: absolute;
+      content: "";
+      height: 24px;
+      width: 24px;
+      left: 4px;
+      bottom: 4px;
+      background: white;
+      border-radius: 50%;
+      transition: 0.3s;
+    }
+
+    .toggle-switch input:checked + .toggle-slider {
+      background: #27ae60;
+    }
+
+    .toggle-switch input:checked + .toggle-slider:before {
+      transform: translateX(28px);
+    }
+
+    .settings-close-btn {
+      margin-top: 20px;
     }
 
     /* Upgrade Screen */
@@ -803,7 +907,33 @@
   </style>
 </head>
 <body>
-  <button id="mute-btn">🔊</button>
+  <button id="settings-btn">⚙️</button>
+
+  <!-- Settings Modal -->
+  <div id="settings-modal" class="hidden">
+    <div class="settings-content">
+      <h2>SETTINGS</h2>
+      <div class="settings-row">
+        <div class="settings-label">
+          <span>🎵</span> Music
+        </div>
+        <label class="toggle-switch">
+          <input type="checkbox" id="music-toggle" checked>
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+      <div class="settings-row">
+        <div class="settings-label">
+          <span>🔊</span> Sound FX
+        </div>
+        <label class="toggle-switch">
+          <input type="checkbox" id="sfx-toggle" checked>
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+      <button class="btn settings-close-btn" id="close-settings-btn">DONE</button>
+    </div>
+  </div>
   <div id="game-container">
     <div id="hud" class="hidden">
       <div class="hud-top">

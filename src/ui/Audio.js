@@ -1,4 +1,4 @@
-// Audio.js - Menu and gameplay music system
+// Audio.js - Menu and gameplay music system with separate music/SFX controls
 
 const MENU_TRACKS = [
   '/music/Victory Parade.mp3',
@@ -16,27 +16,57 @@ export class Audio {
   constructor() {
     this.currentAudio = null;
     this.currentType = null; // 'menu' or 'game'
-    this.muted = this.loadMutePreference();
-    this.volume = 0.5;
+    this.musicVolume = 0.5;
+    this.sfxVolume = 0.7;
+
+    // Load preferences
+    this.musicEnabled = this.loadPreference('mop_music', true);
+    this.sfxEnabled = this.loadPreference('mop_sfx', true);
 
     // Preload check - we'll load on first interaction
     this.initialized = false;
+    this.pendingPlay = null;
+
+    // Setup first interaction listener
+    this.setupFirstInteraction();
   }
 
-  loadMutePreference() {
+  loadPreference(key, defaultValue) {
     try {
-      return localStorage.getItem('mop_muted') === 'true';
+      const saved = localStorage.getItem(key);
+      if (saved === null) return defaultValue;
+      return saved === 'true';
     } catch {
-      return false;
+      return defaultValue;
     }
   }
 
-  saveMutePreference() {
+  savePreference(key, value) {
     try {
-      localStorage.setItem('mop_muted', this.muted.toString());
+      localStorage.setItem(key, value.toString());
     } catch {
       // localStorage not available
     }
+  }
+
+  setupFirstInteraction() {
+    const startMusic = () => {
+      if (!this.initialized && this.pendingPlay) {
+        this.initialized = true;
+        if (this.pendingPlay === 'menu') {
+          this.playMenuMusic();
+        } else if (this.pendingPlay === 'game') {
+          this.playGameMusic();
+        }
+      }
+      document.removeEventListener('click', startMusic);
+      document.removeEventListener('touchstart', startMusic);
+      document.removeEventListener('keydown', startMusic);
+    };
+
+    document.addEventListener('click', startMusic);
+    document.addEventListener('touchstart', startMusic);
+    document.addEventListener('keydown', startMusic);
   }
 
   getRandomTrack(tracks) {
@@ -44,6 +74,10 @@ export class Audio {
   }
 
   async playMenuMusic() {
+    this.pendingPlay = 'menu';
+
+    if (!this.musicEnabled) return;
+
     if (this.currentType === 'menu' && this.currentAudio && !this.currentAudio.paused) {
       return; // Already playing menu music
     }
@@ -56,6 +90,10 @@ export class Audio {
   }
 
   async playGameMusic() {
+    this.pendingPlay = 'game';
+
+    if (!this.musicEnabled) return;
+
     if (this.currentType === 'game' && this.currentAudio && !this.currentAudio.paused) {
       return; // Already playing game music
     }
@@ -68,10 +106,12 @@ export class Audio {
   }
 
   async playTrack(src) {
+    if (!this.musicEnabled) return;
+
     try {
       this.currentAudio = new window.Audio(src);
       this.currentAudio.loop = true;
-      this.currentAudio.volume = this.muted ? 0 : this.volume;
+      this.currentAudio.volume = this.musicVolume;
 
       // When track ends, play another random one from same category
       this.currentAudio.addEventListener('ended', () => {
@@ -125,34 +165,83 @@ export class Audio {
     });
   }
 
-  toggleMute() {
-    this.muted = !this.muted;
-    this.saveMutePreference();
+  // Music controls
+  toggleMusic() {
+    this.musicEnabled = !this.musicEnabled;
+    this.savePreference('mop_music', this.musicEnabled);
 
-    if (this.currentAudio) {
-      this.currentAudio.volume = this.muted ? 0 : this.volume;
+    if (this.musicEnabled) {
+      // Resume music
+      if (this.pendingPlay === 'menu') {
+        this.playMenuMusic();
+      } else if (this.pendingPlay === 'game') {
+        this.playGameMusic();
+      }
+    } else {
+      this.stopMusic();
     }
 
-    return this.muted;
+    return this.musicEnabled;
   }
 
-  setMuted(muted) {
-    this.muted = muted;
-    this.saveMutePreference();
+  setMusicEnabled(enabled) {
+    if (this.musicEnabled === enabled) return;
+    this.toggleMusic();
+  }
 
+  isMusicEnabled() {
+    return this.musicEnabled;
+  }
+
+  setMusicVolume(volume) {
+    this.musicVolume = Math.max(0, Math.min(1, volume));
     if (this.currentAudio) {
-      this.currentAudio.volume = this.muted ? 0 : this.volume;
+      this.currentAudio.volume = this.musicVolume;
     }
+  }
+
+  // SFX controls
+  toggleSFX() {
+    this.sfxEnabled = !this.sfxEnabled;
+    this.savePreference('mop_sfx', this.sfxEnabled);
+    return this.sfxEnabled;
+  }
+
+  setSFXEnabled(enabled) {
+    this.sfxEnabled = enabled;
+    this.savePreference('mop_sfx', this.sfxEnabled);
+  }
+
+  isSFXEnabled() {
+    return this.sfxEnabled;
+  }
+
+  setSFXVolume(volume) {
+    this.sfxVolume = Math.max(0, Math.min(1, volume));
+  }
+
+  // Play sound effect
+  playSFX(src) {
+    if (!this.sfxEnabled) return;
+
+    try {
+      const sfx = new window.Audio(src);
+      sfx.volume = this.sfxVolume;
+      sfx.play().catch(() => {});
+    } catch {
+      // Ignore SFX errors
+    }
+  }
+
+  // Legacy mute support (mutes both)
+  toggleMute() {
+    const newState = !this.musicEnabled;
+    this.setMusicEnabled(newState);
+    this.setSFXEnabled(newState);
+    return !newState;
   }
 
   isMuted() {
-    return this.muted;
-  }
-
-  setVolume(volume) {
-    this.volume = Math.max(0, Math.min(1, volume));
-    if (this.currentAudio && !this.muted) {
-      this.currentAudio.volume = this.volume;
-    }
+    return !this.musicEnabled && !this.sfxEnabled;
   }
 }

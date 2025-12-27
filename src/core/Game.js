@@ -41,28 +41,59 @@ export class Game {
     // Handle resize
     window.addEventListener('resize', () => this.scene.resize());
 
-    // Setup mute button
-    this.setupMuteButton();
+    // Setup settings
+    this.setupSettings();
 
     // Start menu music
     this.audio.playMenuMusic();
   }
 
-  setupMuteButton() {
-    const muteBtn = document.getElementById('mute-btn');
-    if (muteBtn) {
-      this.updateMuteButtonIcon();
-      muteBtn.addEventListener('click', () => {
-        this.audio.toggleMute();
-        this.updateMuteButtonIcon();
+  setupSettings() {
+    const settingsBtn = document.getElementById('settings-btn');
+    const settingsModal = document.getElementById('settings-modal');
+    const closeSettingsBtn = document.getElementById('close-settings-btn');
+    const musicToggle = document.getElementById('music-toggle');
+    const sfxToggle = document.getElementById('sfx-toggle');
+
+    // Initialize toggle states
+    if (musicToggle) {
+      musicToggle.checked = this.audio.isMusicEnabled();
+      musicToggle.addEventListener('change', () => {
+        this.audio.setMusicEnabled(musicToggle.checked);
       });
     }
-  }
 
-  updateMuteButtonIcon() {
-    const muteBtn = document.getElementById('mute-btn');
-    if (muteBtn) {
-      muteBtn.textContent = this.audio.isMuted() ? '🔇' : '🔊';
+    if (sfxToggle) {
+      sfxToggle.checked = this.audio.isSFXEnabled();
+      sfxToggle.addEventListener('change', () => {
+        this.audio.setSFXEnabled(sfxToggle.checked);
+      });
+    }
+
+    // Open settings
+    if (settingsBtn) {
+      settingsBtn.addEventListener('click', () => {
+        // Update toggle states before showing
+        if (musicToggle) musicToggle.checked = this.audio.isMusicEnabled();
+        if (sfxToggle) sfxToggle.checked = this.audio.isSFXEnabled();
+        settingsModal.classList.remove('hidden');
+      });
+    }
+
+    // Close settings
+    if (closeSettingsBtn) {
+      closeSettingsBtn.addEventListener('click', () => {
+        settingsModal.classList.add('hidden');
+      });
+    }
+
+    // Close on background click
+    if (settingsModal) {
+      settingsModal.addEventListener('click', (e) => {
+        if (e.target === settingsModal) {
+          settingsModal.classList.add('hidden');
+        }
+      });
     }
   }
 
