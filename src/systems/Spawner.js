@@ -3,6 +3,13 @@ import { Gate } from '../entities/Gate.js';
 import { Barrel } from '../entities/Barrel.js';
 import { Crate } from '../entities/Crate.js';
 
+// Progression constants
+const PROGRESSION_INTERVAL = 30;        // Seconds per progression level
+const MAX_PROGRESSION_LEVEL = 10;       // Cap to prevent extreme difficulty
+const BASE_ENEMY_SPAWN_INTERVAL = 4;    // Starting enemy spawn interval
+const MIN_ENEMY_SPAWN_INTERVAL = 1.5;   // Fastest enemy spawn rate
+const MIN_ENEMY_SPAWN_RATE = 1;         // Absolute minimum spawn rate
+
 export class Spawner {
   constructor(scene, gameSpeed) {
     this.scene = scene;
@@ -48,9 +55,13 @@ export class Spawner {
     // Update difficulty based on game speed (slower scaling)
     this.difficultyMultiplier = 1 + (gameSpeed - 10) / 30;
 
-    // Progression level: starts at 0, increases over time
-    // Level 1 at 30s, Level 2 at 60s, Level 3 at 120s, etc.
-    this.progressionLevel = Math.floor(this.gameTime / 30);
+    // Progression level: starts at 0, increases every PROGRESSION_INTERVAL seconds
+    // Level 1 at 30s, Level 2 at 60s, Level 3 at 90s, Level 4 at 120s, etc.
+    // Capped at MAX_PROGRESSION_LEVEL to prevent extreme difficulty
+    this.progressionLevel = Math.min(
+      Math.floor(this.gameTime / PROGRESSION_INTERVAL),
+      MAX_PROGRESSION_LEVEL
+    );
 
     // Update spawn timers
     this.enemySpawnTimer += dt;
@@ -60,9 +71,9 @@ export class Spawner {
 
     // Spawn enemies - starts slow, gradually increases
     // Level 0: every 4s, Level 1: every 3s, Level 2: every 2.5s, etc.
-    const baseInterval = Math.max(1.5, 4 - this.progressionLevel * 0.5);
+    const baseInterval = Math.max(MIN_ENEMY_SPAWN_INTERVAL, BASE_ENEMY_SPAWN_INTERVAL - this.progressionLevel * 0.5);
     const enemySpawnRate = baseInterval / this.difficultyMultiplier;
-    if (this.enemySpawnTimer >= Math.max(1, enemySpawnRate)) {
+    if (this.enemySpawnTimer >= Math.max(MIN_ENEMY_SPAWN_RATE, enemySpawnRate)) {
       this.enemySpawnTimer = 0;
       this.spawnEnemyGroup();
     }
@@ -265,5 +276,10 @@ export class Spawner {
     this.gates = [];
     this.barrels = [];
     this.crates = [];
+
+    // Reset progression state
+    this.gameTime = 0;
+    this.progressionLevel = 0;
+    this.difficultyMultiplier = 1;
   }
 }

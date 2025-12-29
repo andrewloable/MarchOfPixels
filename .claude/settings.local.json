@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(bd create:*)",
+      "Bash(bd init:*)",
+      "Bash(bd update:*)",
+      "Bash(bd close:*)",
+      "Bash(npm run build)",
+      "Bash(npm install)",
+      "Bash(npm audit:*)"
+    ]
+  }
+}
